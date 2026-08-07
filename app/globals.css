@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --warm-white: #faf7f2;
+  --cream: #f1e9dd;
+  --cream-deep: #e7dac6;
+  --charcoal: #2a2622;
+  --charcoal-soft: #454039;
+  --oak: #a9805c;
+  --oak-light: #c4a179;
+  --oak-dark: #7d5a3a;
+  --matte-black: #17140f;
+
+  /*
+   * Typography — system font stacks, zero external requests.
+   * The brief calls for a luxury serif heading face (Fraunces) and a
+   * clean sans body face (Manrope). Neither is bundled as a local font
+   * file yet, so we fall back to closely-matched system faces.
+   *
+   * To upgrade to the real faces later:
+   *   1. Add .woff2 files under public/fonts/
+   *   2. Load them with next/font/local in app/layout.tsx
+   *   3. Point --font-display / --font-sans at the resulting CSS variables
+   * No other code needs to change — every component reads the two
+   * variables below, never a hardcoded font name.
+   */
+  --font-display-stack: Georgia, "Times New Roman", Times, serif;
+  --font-sans-stack: Inter, Arial, Helvetica, sans-serif;
+}
+
+@theme inline {
+  --color-warm-white: var(--warm-white);
+  --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-soft: var(--charcoal-soft);
+  --color-oak: var(--oak);
+  --color-oak-light: var(--oak-light);
+  --color-oak-dark: var(--oak-dark);
+  --color-matte-black: var(--matte-black);
+  --font-display: var(--font-display-stack);
+  --font-sans: var(--font-sans-stack);
+}
+
+@layer base {
+  * {
+    @apply border-charcoal/10;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--warm-white);
+    color: var(--charcoal);
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: var(--oak);
+    color: var(--warm-white);
+  }
+  :focus-visible {
+    outline: 2px solid var(--oak-dark);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .eyebrow {
+    font-family: var(--font-sans);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--oak-dark);
+  }
+  .container-lux {
+    @apply mx-auto w-full max-w-[1400px] px-6 md:px-10 lg:px-16;
+  }
+  .hairline {
+    background: linear-gradient(to right, transparent, currentColor, transparent);
+    height: 1px;
+    opacity: 0.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
