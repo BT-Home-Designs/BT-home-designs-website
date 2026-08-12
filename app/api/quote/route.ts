@@ -52,7 +52,7 @@ function isValidEmail(value: unknown): value is string {
   return typeof value === "string" && value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-// Accepts common U.S. formats: 2145550123, 214-555-0123, (214) 555-0123,
+// Accepts common U.S. formats: 2145559012, 214-555-9012, (214) 555-9012,
 // 214.555.0123, +1 214 555 0123 — 7 to 15 digits once punctuation is
 // stripped, per E.164's practical upper bound.
 function isValidPhone(value: unknown): value is string {
