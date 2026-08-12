@@ -31,7 +31,7 @@ export function Button({
 
   const variants = {
     primary: "bg-matte-black text-warm-white hover:bg-oak-dark",
-    secondary: "border border-charcoal/25 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-warm-white",
+    secondary: "border border-charcoal/40 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-warm-white",
     ghost: "text-charcoal hover:text-oak-dark underline-offset-4 hover:underline",
     light: "bg-warm-white text-charcoal hover:bg-cream",
     // For CTA buttons that sit on a dark (bg-matte-black/bg-charcoal)

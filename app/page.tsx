@@ -58,7 +58,7 @@ export default function HomePage() {
               Custom shutters, shades, and drapery designed to elevate your home with timeless style, function, and craftsmanship.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button href="/quote" size="lg">Request a Free Consultation</Button>
+              <Button href="/quote" size="lg" variant="accent">Request a Free Consultation</Button>
               <Button href="/services" size="lg" variant="secondary" icon={false}>View Our Services</Button>
             </div>
 
