@@ -5,13 +5,15 @@ import { Button } from "@/components/Button";
 import { SectionHeading } from "@/components/SectionHeading";
 import { FadeIn } from "@/components/FadeIn";
 import { WindowArt } from "@/components/WindowArt";
+import { SceneImage } from "@/components/SceneImage";
 import { Testimonials } from "@/components/Testimonials";
 import { services } from "@/lib/data/services";
 import { cities } from "@/lib/data/cities";
 import { business } from "@/lib/data/business";
+import { homeMedia } from "@/lib/data/media";
 
 export const metadata: Metadata = {
-  title: "Custom Window Treatments Dallas–Fort Worth | Shutters, Shades & Drapery",
+  title: "Custom Window Treatments Dallas–Fort Worth | BT Home Designs",
   description:
     "Custom plantation shutters, roller shades, motorized shades, and drapery for Dallas–Fort Worth homes. Schedule a free in-home consultation with BT Home Designs.",
   alternates: { canonical: "/" },
@@ -76,34 +78,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <FadeIn delay={0.1} className="relative overflow-hidden rounded-sm border border-charcoal/10 bg-cream">
-            {/* Subtle architectural line detail — evokes louvers/mullions without depicting a room or product photo */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden="true">
-              {Array.from({ length: 14 }).map((_, i) => (
-                <div key={i} className="absolute inset-y-0 w-px bg-oak" style={{ left: `${(i + 1) * (100 / 15)}%` }} />
-              ))}
-            </div>
-            <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
-              <div>
-                <p className="eyebrow mb-3">What We Design</p>
-                <p className="max-w-xs font-display text-3xl leading-[1.2] text-charcoal sm:text-4xl">
-                  Every window, perfectly dressed.
-                </p>
-              </div>
-              <ul className="mt-10 divide-y divide-charcoal/10 border-t border-charcoal/10">
-                {services.slice(0, 5).map((s) => (
-                  <li key={s.slug}>
-                    <Link
-                      href={`/services/${s.slug}`}
-                      className="group flex items-center justify-between gap-4 py-3.5 text-[13px] font-medium uppercase tracking-wide text-charcoal-soft transition-colors hover:text-oak-dark"
-                    >
-                      {s.name}
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <FadeIn delay={0.1} className="relative aspect-[4/5] w-full overflow-hidden rounded-sm lg:aspect-[3/4]">
+            <SceneImage media={homeMedia.hero} priority className="h-full w-full" />
           </FadeIn>
         </div>
       </section>
@@ -151,23 +127,8 @@ export default function HomePage() {
       {/* About */}
       <section className="bg-cream py-20 lg:py-28">
         <div className="container-lux grid gap-14 lg:grid-cols-2 lg:items-center">
-          <FadeIn>
-            <div className="rounded-sm border border-charcoal/10 bg-warm-white p-8 sm:p-10">
-              <p className="eyebrow mb-8">How It Works</p>
-              <div className="space-y-8">
-                {processSteps.map((p, i) => (
-                  <div key={p.step} className={i > 0 ? "border-t border-charcoal/10 pt-8" : ""}>
-                    <div className="flex gap-5">
-                      <span className="font-display text-3xl text-oak">{p.step}</span>
-                      <div>
-                        <p className="font-display text-lg text-charcoal">{p.title}</p>
-                        <p className="mt-1.5 text-[13px] leading-relaxed text-charcoal-soft">{p.copy}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <FadeIn className="relative aspect-[4/3] w-full overflow-hidden rounded-sm lg:aspect-[4/5]">
+            <SceneImage media={homeMedia.about} className="h-full w-full" />
           </FadeIn>
           <FadeIn delay={0.1}>
             <p className="eyebrow mb-4">About BT Home Designs</p>
@@ -205,6 +166,24 @@ export default function HomePage() {
               )}
             </div>
           </FadeIn>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 lg:py-28">
+        <div className="container-lux">
+          <SectionHeading eyebrow="How It Works" title="Three steps from first call to finished window" align="center" className="mx-auto" />
+          <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-3">
+            {processSteps.map((p, i) => (
+              <FadeIn key={p.step} delay={i * 0.08}>
+                <div className="border-t border-charcoal/10 pt-6 text-center sm:text-left">
+                  <span className="font-display text-3xl text-oak">{p.step}</span>
+                  <p className="mt-3 font-display text-lg text-charcoal">{p.title}</p>
+                  <p className="mt-2 text-[13px] leading-relaxed text-charcoal-soft">{p.copy}</p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
         </div>
       </section>
 
