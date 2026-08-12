@@ -4,7 +4,8 @@ import { Check } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
 import { SectionHeading } from "@/components/SectionHeading";
-import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import { WindowArt } from "@/components/WindowArt";
+import { DesignOptions } from "@/components/DesignOptions";
 import { Accordion } from "@/components/Accordion";
 import { FadeIn } from "@/components/FadeIn";
 import { TrustBadges } from "@/components/TrustBadges";
@@ -49,28 +50,31 @@ export default async function ServicePage({ params }: ServicePageProps) {
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
 
-      {/* Hero */}
-      <section className="relative flex h-[70vh] min-h-[520px] items-end bg-charcoal">
-        <ImagePlaceholder variant="charcoal" className="absolute inset-0 h-full w-full" label={service.name} />
-        <div className="absolute inset-0 bg-gradient-to-t from-matte-black/85 via-matte-black/25 to-matte-black/10" />
-        <div className="container-lux relative z-10 pb-16 pt-32">
-          <Breadcrumbs
-            tone="light"
-            items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: service.name }]}
-          />
-          <p className="eyebrow mt-6 mb-4 !text-oak-light">{service.tagline}</p>
-          <h1 className="max-w-2xl text-4xl leading-[1.1] text-warm-white md:text-6xl">{service.name}</h1>
-          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-warm-white/75">{service.heroCopy}</p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Button href="/quote" size="lg">Get Free Consultation</Button>
-            <Button href="/gallery" size="lg" variant="light" icon={false}>View Gallery</Button>
+      {/* Hero — editorial split layout, no photography */}
+      <section className="relative overflow-hidden bg-charcoal pt-32 text-warm-white md:pt-36">
+        <div className="container-lux grid items-center gap-14 pb-16 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <Breadcrumbs
+              tone="light"
+              items={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: service.name }]}
+            />
+            <p className="eyebrow mt-6 mb-4 !text-oak-light">{service.tagline}</p>
+            <h1 className="max-w-2xl text-4xl leading-[1.1] text-warm-white md:text-6xl">{service.name}</h1>
+            <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-warm-white/75">{service.heroCopy}</p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Button href="/quote" size="lg">Get Free Consultation</Button>
+              <Button href="/gallery" size="lg" variant="light" icon={false}>Explore Styles</Button>
+            </div>
           </div>
+          <FadeIn delay={0.1} className="mx-auto aspect-[4/5] w-full max-w-xs lg:max-w-none">
+            <WindowArt variant={service.visual} tone="dark" className="h-full w-full" />
+          </FadeIn>
         </div>
       </section>
 
       {/* Description */}
       <section className="py-20 lg:py-28">
-        <div className="container-lux grid gap-14 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+        <div className="container-lux max-w-3xl">
           <FadeIn>
             <p className="eyebrow mb-4">Overview</p>
             <h2 className="text-3xl leading-[1.15] text-charcoal md:text-4xl">Made for how North Texas actually lives</h2>
@@ -78,9 +82,6 @@ export default async function ServicePage({ params }: ServicePageProps) {
             <div className="mt-8">
               <Button href="/quote" variant="secondary">Request a Free Measure</Button>
             </div>
-          </FadeIn>
-          <FadeIn delay={0.15}>
-            <ImagePlaceholder variant="oak" label={service.name} className="aspect-[4/3] w-full" />
           </FadeIn>
         </div>
       </section>
@@ -94,7 +95,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
               <FadeIn key={b.title} delay={i * 0.08}>
                 <div className="h-full rounded-sm bg-warm-white p-7">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-oak/15">
-                    <Check className="h-4 w-4 text-oak-dark" strokeWidth={2} />
+                    <Check className="h-4 w-4 text-oak-dark" strokeWidth={2} aria-hidden="true" />
                   </div>
                   <h3 className="mt-5 font-display text-lg text-charcoal">{b.title}</h3>
                   <p className="mt-2 text-[13px] leading-relaxed text-charcoal-soft">{b.copy}</p>
@@ -105,16 +106,12 @@ export default async function ServicePage({ params }: ServicePageProps) {
         </div>
       </section>
 
-      {/* Gallery */}
+      {/* Design Options — replaces the photo gallery with structured specs */}
       <section className="py-20 lg:py-28">
         <div className="container-lux">
-          <SectionHeading eyebrow="Gallery" title={`Recent ${service.name.toLowerCase()} installs`} />
-          <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <FadeIn key={i} delay={i * 0.08}>
-                <ImagePlaceholder variant={i % 2 === 0 ? "oak" : "charcoal"} label={service.galleryTag} className="aspect-square w-full" />
-              </FadeIn>
-            ))}
+          <SectionHeading eyebrow="Design Options" title={`Ways to configure your ${service.name.toLowerCase()}`} />
+          <div className="mt-12">
+            <DesignOptions options={service.designOptions} visual={service.visual} />
           </div>
         </div>
       </section>
@@ -143,7 +140,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
           <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
             {otherServices.map((s) => (
               <a key={s.slug} href={`/services/${s.slug}`} className="group block">
-                <ImagePlaceholder variant="charcoal" className="aspect-[4/3] w-full transition-transform duration-500 group-hover:scale-[1.02]" />
+                <WindowArt variant={s.visual} tone="light" className="aspect-[4/3] w-full transition-transform duration-500 group-hover:scale-[1.02]" />
                 <h3 className="mt-4 font-display text-xl text-charcoal group-hover:text-oak-dark">{s.name}</h3>
               </a>
             ))}

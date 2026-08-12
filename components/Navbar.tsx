@@ -10,6 +10,7 @@ import { Button } from "./Button";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
+  { label: "Home", href: "/" },
   { label: "Gallery", href: "/gallery" },
   { label: "About", href: "/about" },
   { label: "Service Area", href: "/service-area" },
@@ -67,7 +68,7 @@ export function Navbar() {
       )}
     >
       <nav className="container-lux flex h-20 items-center justify-between md:h-24" aria-label="Primary">
-        <Link href="/" className="flex flex-col leading-none" onClick={() => setMobileOpen(false)}>
+        <Link href="/" aria-label="BT Home Designs home" className="flex flex-col leading-none" onClick={() => setMobileOpen(false)}>
           <span
             className={cn(
               "font-display text-xl tracking-tight md:text-2xl",

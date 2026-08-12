@@ -28,12 +28,16 @@ export default function ContactPage() {
 
       <div className="container-lux mt-16 grid gap-16 lg:grid-cols-[1fr_1.3fr]">
         <div className="space-y-8">
-          <InfoRow icon={MapPin} label="Showroom">
-            {business.address.street}
-            {business.address.suite && <>, {business.address.suite}</>}
-            <br />
+          <InfoRow icon={MapPin} label={business.address.isVerified ? "Showroom" : "Area Served"}>
+            {business.address.isVerified && (
+              <>
+                {business.address.street}
+                {business.address.suite && <>, {business.address.suite}</>}
+                <br />
+              </>
+            )}
             {business.address.city}, {business.address.state}
-            {business.address.postalCode && ` ${business.address.postalCode}`}
+            {business.address.isVerified && business.address.postalCode && ` ${business.address.postalCode}`}
           </InfoRow>
           <InfoRow icon={Phone} label="Phone">
             <a href={`tel:${business.contact.phone}`} className="hover:text-oak-dark">{business.contact.phoneDisplay}</a>
@@ -57,15 +61,19 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-sm border border-charcoal/10">
-            <iframe
-              title={`${business.name} showroom location`}
-              src={business.urls.mapsEmbed}
-              className="h-64 w-full grayscale"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
+          {/* Map only renders once a real, verified address is configured
+              — see lib/data/business.ts. No placeholder map is shown. */}
+          {business.address.isVerified && (
+            <div className="overflow-hidden rounded-sm border border-charcoal/10">
+              <iframe
+                title={`${business.name} showroom location`}
+                src={business.urls.mapsEmbed}
+                className="h-64 w-full grayscale"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          )}
         </div>
 
         <div className="rounded-sm bg-cream p-8 md:p-10">

@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Heart, Ruler, Sparkles, Users } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SectionHeading } from "@/components/SectionHeading";
-import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import { WindowArt } from "@/components/WindowArt";
 import { FadeIn } from "@/components/FadeIn";
 import { Button } from "@/components/Button";
-import { ReviewCarousel } from "@/components/ReviewCarousel";
+import { TrustSection } from "@/components/TrustSection";
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -19,6 +19,13 @@ const values = [
   { icon: Heart, title: "Personal Service", copy: "You work with the same consultant from your first appointment through final installation — no call center handoffs." },
   { icon: Ruler, title: "Attention to Detail", copy: "Every opening is measured twice. Reveals, returns, and mounting depth are checked before a single order is placed." },
   { icon: Sparkles, title: "A Luxury Experience", copy: "From the first phone call to the final walkthrough, the process should feel as considered as the finished room." },
+];
+
+const process = [
+  { step: "01", title: "Free Consultation", copy: "A specialist visits your home with real hardwood, fabric, and shade samples and walks every window with you." },
+  { step: "02", title: "Written Estimate", copy: "You leave the consultation with clear pricing for exactly what was discussed — no pressure to decide on the spot." },
+  { step: "03", title: "Precision Measure", copy: "Our own in-house measure technicians confirm every opening before any order is placed with fabrication." },
+  { step: "04", title: "Professional Install", copy: "Trained install crews — not subcontractors — complete the finished work, typically in a single visit." },
 ];
 
 export default function AboutPage() {
@@ -37,9 +44,9 @@ export default function AboutPage() {
       </section>
 
       <section className="pb-20 lg:pb-28">
-        <div className="container-lux grid gap-14 lg:grid-cols-2 lg:items-center">
+        <div className="container-lux grid gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
           <FadeIn>
-            <ImagePlaceholder variant="oak" label="The BT Home Designs Team" className="aspect-[4/5] w-full" />
+            <WindowArt variant="drape" tone="light" className="aspect-[4/5] w-full" />
           </FadeIn>
           <FadeIn delay={0.15}>
             <p className="eyebrow mb-4">How We Work</p>
@@ -59,6 +66,24 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Process */}
+      <section className="bg-charcoal py-20 text-warm-white lg:py-28">
+        <div className="container-lux">
+          <SectionHeading eyebrow="What to Expect" title="Four steps from first call to finished window" tone="light" />
+          <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {process.map((p, i) => (
+              <FadeIn key={p.step} delay={i * 0.08}>
+                <div className="border-t border-warm-white/15 pt-6">
+                  <span className="font-display text-3xl text-oak-light">{p.step}</span>
+                  <h3 className="mt-4 font-display text-xl text-warm-white">{p.title}</h3>
+                  <p className="mt-2.5 text-[14px] leading-relaxed text-warm-white/60">{p.copy}</p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="bg-cream py-20 lg:py-28">
         <div className="container-lux">
           <SectionHeading eyebrow="What We Believe" title="The values behind every install" align="center" className="mx-auto" />
@@ -67,7 +92,7 @@ export default function AboutPage() {
               <FadeIn key={title} delay={i * 0.08}>
                 <div className="text-center">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-warm-white">
-                    <Icon className="h-5 w-5 text-oak-dark" strokeWidth={1.5} />
+                    <Icon className="h-5 w-5 text-oak-dark" strokeWidth={1.5} aria-hidden="true" />
                   </div>
                   <h3 className="mt-5 font-display text-lg text-charcoal">{title}</h3>
                   <p className="mt-2 text-[13px] leading-relaxed text-charcoal-soft">{copy}</p>
@@ -80,10 +105,7 @@ export default function AboutPage() {
 
       <section className="py-20 lg:py-28">
         <div className="container-lux">
-          <SectionHeading eyebrow="From Our Clients" title="What it's like to work with us" align="center" className="mx-auto" />
-          <div className="mt-14">
-            <ReviewCarousel />
-          </div>
+          <TrustSection eyebrow="What You Can Expect" title="Working with BT Home Designs" />
         </div>
       </section>
 

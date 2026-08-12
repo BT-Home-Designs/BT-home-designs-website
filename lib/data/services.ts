@@ -1,3 +1,5 @@
+export type ServiceVisual = "louver" | "roller" | "weave" | "drape" | "mesh";
+
 export type Service = {
   slug: string;
   name: string;
@@ -5,10 +7,12 @@ export type Service = {
   tagline: string;
   heroCopy: string;
   description: string;
-  image: string;
+  /** Which CSS/SVG decorative motif (components/WindowArt.tsx) represents this service. */
+  visual: ServiceVisual;
   benefits: { title: string; copy: string }[];
+  /** Structured spec cards shown on the service page instead of a photo gallery. */
+  designOptions: { label: string; value: string }[];
   faqs: { q: string; a: string }[];
-  galleryTag: string;
 };
 
 export const services: Service[] = [
@@ -21,7 +25,6 @@ export const services: Service[] = [
       "Solid hardwood and composite shutters, hand-fitted to every window in your Texas home — the closest thing to permanent architecture a window treatment can be.",
     description:
       "Plantation shutters are the most requested treatment in North Texas for a reason: they hold their shape through decades of heat, add real resale value, and control light with a single tilt of the louver. We build every panel to the exact opening — no fillers, no gaps — using kiln-dried basswood or weather-stable composite for sun rooms and bathrooms.",
-    image: "/images/services/plantation-shutters.jpg",
     benefits: [
       { title: "Built for Texas heat", copy: "Composite and hybrid frames resist warping through triple-digit summers and hold their finish for decades." },
       { title: "Exact-fit engineering", copy: "Every panel is measured and hung to your opening — true divided louvers, hidden tilt rods, flush reveals." },
@@ -34,7 +37,15 @@ export const services: Service[] = [
       { q: "Can shutters be fitted to bay or arched windows?", a: "Yes. Arches, angles, bays, and French doors are all part of our standard measuring process — we template unusual openings by hand." },
       { q: "Do shutters help with energy bills?", a: "Closed hardwood or composite louvers add a meaningful insulating layer against both summer heat gain and winter draft, which DFW homeowners notice most in west-facing rooms." },
     ],
-    galleryTag: "Living Room",
+    visual: "louver",
+    designOptions: [
+      { label: "Materials", value: "Kiln-dried hardwood or weather-stable composite" },
+      { label: "Louver Size", value: "2.5in, 3.5in, or 4.5in — sized to your window's proportions" },
+      { label: "Light Control", value: "Full tilt range, from closed privacy to soft diffused daylight" },
+      { label: "Privacy", value: "Complete — no gaps at the frame, hidden tilt rods" },
+      { label: "Insulation", value: "Adds a real thermal layer against summer heat and winter draft" },
+      { label: "Best For", value: "Arched, angled, and bay windows; French doors; whole-home consistency" },
+    ],
   },
   {
     slug: "roller-shades",
@@ -45,7 +56,6 @@ export const services: Service[] = [
       "A single flat plane of fabric that rolls away out of sight — roller shades bring a tailored, minimal look to any room without competing with your architecture.",
     description:
       "Roller shades are the quiet workhorse of a well-designed home: nearly invisible when raised, precise when lowered, and available in hundreds of weaves from sheer to full blackout. We fabricate every shade to order in cassette, fabric-wrapped, or exposed-roll styles, with cordless, motorized, or continuous-loop operation.",
-    image: "/images/services/roller-shades.jpg",
     benefits: [
       { title: "Hundreds of fabrics", copy: "From barely-there sheers to full room-darkening weaves, banded dual shades, and solar screens rated for DFW sun." },
       { title: "Disappears when raised", copy: "A slim cassette or fabric-wrapped headrail keeps the stack tight and nearly invisible against the ceiling line." },
@@ -58,7 +68,15 @@ export const services: Service[] = [
       { q: "Are roller shades motorized?", a: "We offer manual, cordless spring-assist, and fully motorized options with app or voice control on the same fabric lineup." },
       { q: "How wide can a single roller shade span?", a: "Standard fabrication covers openings up to roughly 12 feet wide as one continuous shade, with reinforced tubes for larger glass walls." },
     ],
-    galleryTag: "Kitchen",
+    visual: "roller",
+    designOptions: [
+      { label: "Materials", value: "Hundreds of weaves, from sheer to full blackout" },
+      { label: "Light Control", value: "Light-filtering, solar, or full blackout fabric" },
+      { label: "Privacy", value: "Adjustable by fabric opacity; dual-shade option for both" },
+      { label: "Motorization", value: "Manual, cordless spring-assist, or fully motorized" },
+      { label: "Style", value: "Cassette, fabric-wrapped, or exposed-roll headrail" },
+      { label: "Best For", value: "Kitchens, living rooms, and large glass walls up to ~12ft wide" },
+    ],
   },
   {
     slug: "motorized-shades",
@@ -69,7 +87,6 @@ export const services: Service[] = [
       "Raise every shade in the house at sunrise, close the west wall automatically at 4pm, or set them from bed with your phone — motorization built into the home, not bolted on.",
     description:
       "Motorized shades pair any of our fabric, cellular, or woven wood systems with a quiet in-tube motor, controlled by remote, wall keypad, app, or your existing smart home system. We design the low-voltage wiring and hub placement during the same in-home consultation as your fabric selection, so the finished install looks and feels custom-built.",
-    image: "/images/services/motorized-shades.jpg",
     benefits: [
       { title: "Works with your smart home", copy: "Integrates with Lutron, Control4, Apple Home, Amazon Alexa, and Google Home for scheduled or voice-triggered scenes." },
       { title: "Rechargeable or hardwired", copy: "Battery, solar-charged, and hardwired motor options fit new construction and retrofit projects alike." },
@@ -82,7 +99,15 @@ export const services: Service[] = [
       { q: "How long does the battery last?", a: "Typical use averages 12–18 months per charge, with a simple USB-C recharge cycle and no need to remove the shade." },
       { q: "Can existing shades be retrofitted with motors?", a: "In many cases yes — we evaluate your current hardware during the consultation and recommend retrofit versus replacement." },
     ],
-    galleryTag: "Office",
+    visual: "roller",
+    designOptions: [
+      { label: "Materials", value: "Any fabric, cellular, or woven wood system in our lineup" },
+      { label: "Power", value: "Rechargeable battery, solar-charged, or hardwired" },
+      { label: "Smart Home", value: "Lutron, Control4, Apple Home, Alexa, Google Home" },
+      { label: "Motorization", value: "Whisper-quiet in-tube motors, grouped by room or scene" },
+      { label: "Style", value: "Same fabric and headrail options as our manual lines" },
+      { label: "Best For", value: "Whole-home automation, hard-to-reach windows, nurseries" },
+    ],
   },
   {
     slug: "zebra-shades",
@@ -93,7 +118,6 @@ export const services: Service[] = [
       "Two layers of fabric on one track let you dial in exactly how much of the outside world you want to see — from soft diffused daylight to full privacy.",
     description:
       "Zebra shades (also called banded or dual shades) alternate sheer and opaque fabric stripes on a single roll. Slide the shade and the stripes align or offset, letting you tune light and privacy continuously rather than choosing between open and closed. They read as modern and architectural, and work especially well in transitional and contemporary DFW homes.",
-    image: "/images/services/zebra-shades.jpg",
     benefits: [
       { title: "Continuous light control", copy: "Align the bands for a soft glow or offset them for full privacy — an in-between option roller shades can't match." },
       { title: "Modern, architectural look", copy: "Clean horizontal banding suits contemporary and transitional interiors without feeling heavy." },
@@ -106,7 +130,15 @@ export const services: Service[] = [
       { q: "What fabric weights are available?", a: "Light-filtering, semi-privacy, and blackout-backed bands are all available in the same hardware system." },
       { q: "Can zebra shades be motorized?", a: "Yes, using the same in-tube motors as our roller and cellular lines." },
     ],
-    galleryTag: "Bedroom",
+    visual: "roller",
+    designOptions: [
+      { label: "Materials", value: "Alternating sheer and opaque banded fabric" },
+      { label: "Light Control", value: "Continuous — slide to align or offset the bands" },
+      { label: "Privacy", value: "Full privacy when bands are offset" },
+      { label: "Motorization", value: "Cordless or fully motorized, same as our roller line" },
+      { label: "Style", value: "Clean horizontal banding, modern and architectural" },
+      { label: "Best For", value: "West-facing rooms, contemporary and transitional interiors" },
+    ],
   },
   {
     slug: "woven-woods",
@@ -117,7 +149,6 @@ export const services: Service[] = [
       "Bamboo, jute, and reed woven into a warm, textural shade that brings an organic material into rooms that call for something softer than a hard finish.",
     description:
       "Woven wood shades are handwoven from natural materials — bamboo, jute, rattan, and grasses — giving a room warmth and texture that fabric can't replicate. They're a favorite in sunrooms, breakfast nooks, and coastal or transitional interiors across North Texas, and are available flat, roman-fold, or with a blackout liner for bedrooms.",
-    image: "/images/services/woven-woods.jpg",
     benefits: [
       { title: "Natural texture", copy: "Handwoven bamboo, jute, and grass materials add organic warmth no synthetic fabric fully replicates." },
       { title: "Liner options", copy: "Add a room-darkening or privacy liner behind the weave for bedrooms while keeping the woven face outward." },
@@ -130,7 +161,15 @@ export const services: Service[] = [
       { q: "Do woven woods hold up in humid rooms?", a: "We recommend them for living areas, bedrooms, and sunrooms; for full bathrooms we typically suggest composite shutters or a moisture-rated fabric shade instead." },
       { q: "What operating systems are available?", a: "Cordless lift, continuous loop, and motorized options are all available on our woven wood line." },
     ],
-    galleryTag: "Living Room",
+    visual: "weave",
+    designOptions: [
+      { label: "Materials", value: "Bamboo, jute, rattan, and natural grasses" },
+      { label: "Light Control", value: "Natural filtering; add a liner for more control" },
+      { label: "Privacy", value: "Sheer by nature — a fabric liner adds full privacy" },
+      { label: "Fold Style", value: "Flat roll or soft cascading roman fold" },
+      { label: "Style", value: "Organic texture for coastal and transitional rooms" },
+      { label: "Best For", value: "Sunrooms, breakfast nooks, living rooms, bedrooms with a liner" },
+    ],
   },
   {
     slug: "custom-drapery",
@@ -141,7 +180,6 @@ export const services: Service[] = [
       "Full-length drapery, hand-sewn to your fabric, lining, and hardware selections — the finishing layer that makes a room feel designed rather than decorated.",
     description:
       "Custom drapery is sewn to order from hundreds of designer fabrics, in your choice of pleat style, lining, and hardware, and hung to the exact height and width your windows call for. Pair it as a soft frame around shutters or shades, or run it alone for a bedroom or formal dining room that wants pure texture and drape.",
-    image: "/images/services/custom-drapery.jpg",
     benefits: [
       { title: "Made-to-measure", copy: "Every panel is cut and sewn to your window's exact height, with pooling, break, or hem specified during your consultation." },
       { title: "Designer fabric library", copy: "Hundreds of textiles from linen and velvet to performance weaves rated for DFW sun exposure." },
@@ -154,7 +192,15 @@ export const services: Service[] = [
       { q: "Is motorized drapery available?", a: "Yes, on a quiet traverse track with app and voice control, most often specified for primary bedrooms and great rooms." },
       { q: "How long does custom drapery take to fabricate?", a: "Typically five to seven weeks from final measure to installation, depending on fabric and hardware lead times." },
     ],
-    galleryTag: "Bedroom",
+    visual: "drape",
+    designOptions: [
+      { label: "Fabric", value: "Hundreds of designer textiles, linen to velvet" },
+      { label: "Lining", value: "Standard, blackout, or interlining, sewn in invisibly" },
+      { label: "Pleat Style", value: "Pinch pleat, goblet, ripple fold, or tab top" },
+      { label: "Hardware", value: "Rods, rings, and finials selected and installed together" },
+      { label: "Length", value: "Made-to-measure — floor, break, or intentional pooling" },
+      { label: "Layering", value: "Pairs with shutters or shades for a fully framed window" },
+    ],
   },
   {
     slug: "exterior-shades",
@@ -165,7 +211,6 @@ export const services: Service[] = [
       "Motorized solar screens for patios, porches, and outdoor kitchens — built to handle Texas wind and sun while keeping the space usable ten months a year.",
     description:
       "Exterior shades extend your living space onto the patio, screening intense afternoon sun and wind-driven debris while keeping the view. Built from UV-stabilized solar mesh and weather-rated tracks, they're engineered specifically for North Texas's combination of high heat, strong storms, and bright western exposure — and motorize into a compact headbox when not in use.",
-    image: "/images/services/exterior-shades.jpg",
     benefits: [
       { title: "Built for DFW weather", copy: "Wind-rated tracks and UV-stabilized mesh hold up to summer storms and year-round sun exposure." },
       { title: "Extends outdoor living", copy: "Cuts patio surface temperature and glare enough to keep outdoor kitchens and seating areas usable through peak summer afternoons." },
@@ -178,7 +223,15 @@ export const services: Service[] = [
       { q: "Can exterior shades be added to an existing patio cover?", a: "Yes — most patio and pergola structures can be retrofitted; we assess mounting points during your in-home consultation." },
       { q: "How much heat reduction can I expect?", a: "Depending on mesh density and orientation, homeowners typically see a noticeable drop in radiant heat and glare on west- and south-facing patios." },
     ],
-    galleryTag: "Patio",
+    visual: "mesh",
+    designOptions: [
+      { label: "Materials", value: "UV-stabilized solar mesh, wind-rated tracks" },
+      { label: "Light Control", value: "Mesh openness from light-filtering to near-total block" },
+      { label: "Weather", value: "Engineered for North Texas heat, sun, and storms" },
+      { label: "Motorization", value: "Motorized as standard, retracts into a slim headbox" },
+      { label: "Style", value: "Low-profile headbox, minimal visual footprint" },
+      { label: "Best For", value: "Patios, porches, and outdoor kitchens" },
+    ],
   },
 ];
 

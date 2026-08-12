@@ -15,7 +15,9 @@ export function Footer() {
     <footer className="bg-matte-black text-warm-white">
       <div className="container-lux grid grid-cols-2 gap-10 py-16 md:grid-cols-4 lg:py-24">
         <div className="col-span-2 pr-6 md:col-span-1">
-          <span className="font-display text-2xl">{business.name}</span>
+          <Link href="/" aria-label="BT Home Designs home" className="font-display text-2xl">
+            {business.name}
+          </Link>
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-warm-white/60">
             {business.description}
           </p>
@@ -72,11 +74,15 @@ export function Footer() {
             <li className="flex gap-3">
               <MapPin className="h-4 w-4 shrink-0 text-oak-light" strokeWidth={1.5} aria-hidden="true" />
               <span>
-                {business.address.street}
-                {business.address.suite && <>, {business.address.suite}</>}
-                <br />
+                {business.address.isVerified && (
+                  <>
+                    {business.address.street}
+                    {business.address.suite && <>, {business.address.suite}</>}
+                    <br />
+                  </>
+                )}
                 {business.address.city}, {business.address.state}
-                {business.address.postalCode && ` ${business.address.postalCode}`}
+                {business.address.isVerified && business.address.postalCode && ` ${business.address.postalCode}`}
               </span>
             </li>
             <li className="flex gap-3">
@@ -98,6 +104,7 @@ export function Footer() {
         <div className="container-lux flex flex-col items-center justify-between gap-3 py-6 text-[11px] text-warm-white/40 md:flex-row">
           <p>© {year} {business.name}. Family-owned &amp; locally operated in North Texas.</p>
           <div className="flex gap-6">
+            <Link href="/" className="hover:text-warm-white/70">Home</Link>
             <Link href="/quote" className="hover:text-warm-white/70">Request a Quote</Link>
             <Link href="/contact" className="hover:text-warm-white/70">Contact</Link>
           </div>

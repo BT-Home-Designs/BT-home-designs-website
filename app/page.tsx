@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarCheck, Ruler, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowUpRight, CalendarCheck, Ruler, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/Button";
 import { SectionHeading } from "@/components/SectionHeading";
 import { FadeIn } from "@/components/FadeIn";
-import { ShutterReveal } from "@/components/ShutterReveal";
-import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import { WindowArt } from "@/components/WindowArt";
 import { TrustBadges } from "@/components/TrustBadges";
-import { ReviewCarousel } from "@/components/ReviewCarousel";
+import { TrustSection } from "@/components/TrustSection";
 import { FinancingSection } from "@/components/FinancingSection";
-import { InstagramGallery } from "@/components/InstagramGallery";
 import { services } from "@/lib/data/services";
 
 export const metadata: Metadata = {
@@ -31,27 +29,33 @@ const whyUs = [
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative flex h-[92vh] min-h-[640px] items-end overflow-hidden bg-charcoal">
-        <ImagePlaceholder variant="charcoal" className="absolute inset-0 h-full w-full" label="Dallas Living Room, Hardwood Shutters" />
-        <div className="absolute inset-0 bg-gradient-to-t from-matte-black/80 via-matte-black/20 to-matte-black/10" />
-        <ShutterReveal />
-        <div className="container-lux relative z-20 pb-20 pt-32 md:pb-28">
-          <p className="eyebrow mb-5 !text-oak-light">Dallas–Fort Worth Metroplex</p>
-          <h1 className="max-w-3xl text-4xl leading-[1.08] text-warm-white sm:text-5xl md:text-6xl lg:text-[4.2rem]">
-            Luxury Custom Window Treatments Designed for Texas Homes
-          </h1>
-          <div className="mt-7 flex flex-wrap gap-x-3 gap-y-2">
-            {products.map((p) => (
-              <span key={p} className="rounded-full border border-warm-white/25 px-4 py-1.5 text-[12px] font-medium text-warm-white/85">
-                {p}
-              </span>
-            ))}
+      {/* Hero — split editorial layout, no photography */}
+      <section className="relative overflow-hidden bg-cream pt-32 md:pt-36">
+        <div className="container-lux grid items-center gap-16 pb-20 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 lg:pb-28">
+          <div>
+            <p className="eyebrow mb-5">Dallas–Fort Worth Metroplex</p>
+            <h1 className="max-w-xl text-4xl leading-[1.08] text-charcoal sm:text-5xl md:text-6xl">
+              Luxury Custom Window Treatments Designed for Texas Homes
+            </h1>
+            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-charcoal-soft">
+              Plantation shutters, roller shades, motorized systems, and custom drapery — designed, measured, and installed by one local team, from your first consultation to the final walkthrough.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-x-2.5 gap-y-2">
+              {products.map((p) => (
+                <span key={p} className="rounded-full border border-charcoal/15 px-4 py-1.5 text-[12px] font-medium text-charcoal-soft">
+                  {p}
+                </span>
+              ))}
+            </div>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Button href="/quote" size="lg">Get Free Consultation</Button>
+              <Button href="/gallery" size="lg" variant="secondary" icon={false}>Explore Styles</Button>
+            </div>
           </div>
-          <div className="mt-10 flex flex-wrap gap-4">
-            <Button href="/quote" size="lg">Get Free Consultation</Button>
-            <Button href="/gallery" size="lg" variant="light" icon={false}>View Gallery</Button>
-          </div>
+
+          <FadeIn delay={0.1} className="relative mx-auto aspect-[4/5] w-full max-w-sm lg:max-w-none">
+            <WindowArt variant="louver" tone="light" className="h-full w-full shadow-xl shadow-charcoal/10" />
+          </FadeIn>
         </div>
       </section>
 
@@ -63,7 +67,7 @@ export default function HomePage() {
             {whyUs.map(({ icon: Icon, title, copy }, i) => (
               <FadeIn key={title} delay={i * 0.1}>
                 <div className="border-t border-charcoal/15 pt-6">
-                  <Icon className="h-6 w-6 text-oak-dark" strokeWidth={1.25} />
+                  <Icon className="h-6 w-6 text-oak-dark" strokeWidth={1.25} aria-hidden="true" />
                   <h3 className="mt-5 font-display text-xl text-charcoal">{title}</h3>
                   <p className="mt-2.5 text-[14px] leading-relaxed text-charcoal-soft">{copy}</p>
                 </div>
@@ -73,47 +77,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Services grid */}
+      {/* Find Your Perfect Window Treatment — replaces both the old photo
+          grid and the old "gallery preview" section */}
       <section className="bg-charcoal py-20 text-warm-white lg:py-28">
         <div className="container-lux">
           <SectionHeading
-            eyebrow="What We Install"
+            eyebrow="Find Your Perfect Window Treatment"
             title="Seven ways to shape the light in your home"
             tone="light"
           />
-          <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-sm bg-warm-white/10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((s, i) => (
-              <FadeIn key={s.slug} delay={(i % 4) * 0.06}>
-                <Link href={`/services/${s.slug}`} className="group relative block aspect-[4/5] overflow-hidden bg-charcoal">
-                  <ImagePlaceholder variant="oak" className="h-full w-full transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-matte-black/85 via-matte-black/10 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-6">
-                    <p className="font-display text-xl text-warm-white">{s.name}</p>
-                    <p className="mt-1 text-[12px] text-warm-white/60">{s.tagline}</p>
+              <FadeIn key={s.slug} delay={(i % 3) * 0.08}>
+                <Link
+                  href={`/services/${s.slug}`}
+                  className="group flex h-full flex-col justify-between rounded-sm border border-warm-white/10 bg-warm-white/[0.03] p-7 transition-colors hover:border-oak-light/40 hover:bg-warm-white/[0.06]"
+                >
+                  <div>
+                    <WindowArt variant={s.visual} tone="dark" className="h-16 w-16 rounded-full" />
+                    <p className="mt-6 font-display text-xl text-warm-white">{s.name}</p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-warm-white/60">{s.tagline}</p>
+                    <p className="mt-4 text-[12px] font-medium text-oak-light">{s.benefits[0].title}</p>
                   </div>
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-warm-white/80 group-hover:text-oak-light">
+                    Learn More <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+                  </span>
                 </Link>
               </FadeIn>
             ))}
           </div>
           <div className="mt-10 text-center">
             <Button href="/services" variant="light">Explore All Services</Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Gallery preview */}
-      <section className="py-20 lg:py-28">
-        <div className="container-lux">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHeading eyebrow="Recent Work" title="A look inside DFW homes we've completed" />
-            <Button href="/gallery" variant="secondary">View Full Gallery</Button>
-          </div>
-          <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-            {["Living Room", "Kitchen", "Bedroom", "Patio"].map((label, i) => (
-              <FadeIn key={label} delay={i * 0.08} className={i === 0 || i === 3 ? "md:row-span-2 md:aspect-[3/5]" : "aspect-square"}>
-                <ImagePlaceholder label={label} variant={i % 2 === 0 ? "oak" : "charcoal"} className="h-full w-full" />
-              </FadeIn>
-            ))}
           </div>
         </div>
       </section>
@@ -125,24 +119,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Trust section — replaces illustrative testimonials with factual claims only */}
       <section className="py-20 lg:py-28">
         <div className="container-lux">
-          <SectionHeading eyebrow="Client Stories" title="North Texas homeowners on working with us" align="center" className="mx-auto" />
-          <div className="mt-14">
-            <ReviewCarousel />
-          </div>
+          <TrustSection />
         </div>
       </section>
 
       <FinancingSection />
-
-      {/* Instagram */}
-      <section className="py-20 lg:py-24">
-        <div className="container-lux">
-          <InstagramGallery />
-        </div>
-      </section>
 
       {/* Final CTA */}
       <section className="relative overflow-hidden bg-matte-black py-24 text-center lg:py-32">

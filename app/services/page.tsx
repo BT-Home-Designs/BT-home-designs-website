@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SectionHeading } from "@/components/SectionHeading";
-import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import { WindowArt } from "@/components/WindowArt";
 import { FadeIn } from "@/components/FadeIn";
 import { services } from "@/lib/data/services";
 
@@ -28,12 +29,13 @@ export default function ServicesIndexPage() {
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((s, i) => (
             <FadeIn key={s.slug} delay={(i % 3) * 0.08}>
-              <Link href={`/services/${s.slug}`} className="group block">
-                <div className="relative aspect-[4/5] overflow-hidden">
-                  <ImagePlaceholder variant={i % 2 === 0 ? "oak" : "charcoal"} className="h-full w-full transition-transform duration-700 group-hover:scale-105" />
-                </div>
-                <h2 className="mt-5 font-display text-2xl text-charcoal group-hover:text-oak-dark">{s.name}</h2>
-                <p className="mt-2 text-[14px] leading-relaxed text-charcoal-soft">{s.tagline}</p>
+              <Link href={`/services/${s.slug}`} className="group flex h-full flex-col rounded-sm border border-charcoal/10 p-7 transition-colors hover:border-oak-dark">
+                <WindowArt variant={s.visual} tone="light" className="aspect-[4/3] w-full transition-transform duration-500 group-hover:scale-[1.02]" />
+                <h2 className="mt-6 font-display text-2xl text-charcoal group-hover:text-oak-dark">{s.name}</h2>
+                <p className="mt-2 flex-1 text-[14px] leading-relaxed text-charcoal-soft">{s.tagline}</p>
+                <span className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-oak-dark">
+                  Learn More <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
               </Link>
             </FadeIn>
           ))}
