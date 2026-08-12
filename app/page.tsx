@@ -1,75 +1,116 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight, CalendarCheck, Ruler, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowUpRight, Award, Hammer, Heart, Home as HomeIcon, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/Button";
 import { SectionHeading } from "@/components/SectionHeading";
 import { FadeIn } from "@/components/FadeIn";
+import { SceneImage } from "@/components/SceneImage";
 import { WindowArt } from "@/components/WindowArt";
-import { TrustBadges } from "@/components/TrustBadges";
-import { TrustSection } from "@/components/TrustSection";
-import { FinancingSection } from "@/components/FinancingSection";
+import { Testimonials } from "@/components/Testimonials";
 import { services } from "@/lib/data/services";
+import { cities } from "@/lib/data/cities";
+import { business } from "@/lib/data/business";
+import { homeMedia } from "@/lib/data/media";
 
 export const metadata: Metadata = {
-  title: "Luxury Custom Window Treatments in Dallas–Fort Worth",
+  title: "Custom Window Treatments Dallas–Fort Worth | Shutters, Shades & Drapery",
   description:
-    "BT Home Designs creates luxury plantation shutters, roller shades, motorized shades, and custom drapery for homes across DFW. Schedule your free in-home consultation.",
+    "Custom plantation shutters, roller shades, motorized shades, and drapery for Dallas–Fort Worth homes. Schedule a free in-home consultation with BT Home Designs.",
   alternates: { canonical: "/" },
 };
 
-const products = ["Plantation Shutters", "Roller Shades", "Motorized Shades", "Custom Drapery", "Woven Woods"];
-
-const whyUs = [
-  { icon: CalendarCheck, title: "Free In-Home Consultation", copy: "A design consultant brings real samples to your actual windows and light — no showroom guesswork." },
-  { icon: Ruler, title: "Professional Measuring", copy: "Precision measurements for a true, gap-free fit on every opening, including arches and angles." },
-  { icon: ShieldCheck, title: "Expert Installation", copy: "Our own trained install crews, not subcontractors — finished in a single visit for most homes." },
-  { icon: Sparkles, title: "Premium Products", copy: "Hardwood, composite, and designer textiles built to perform through Texas heat and sun." },
+const heroTrustPoints = [
+  { icon: HomeIcon, label: "Free In-Home\nConsultation" },
+  { icon: ShieldCheck, label: "Professional\nInstallation" },
+  { icon: Award, label: "Quality You Can\nCount On" },
+  { icon: Users, label: "Locally Owned &\nFamily Operated" },
 ];
+
+const differenceColumns = [
+  { icon: Hammer, title: "Custom, Every Time", copy: "Every window is measured and crafted specifically for your home." },
+  { icon: ShieldCheck, title: "Quality You Can See", copy: "We use premium materials and trusted products designed for lasting beauty." },
+  { icon: Award, title: "Installed to Perfection", copy: "Professional installation with attention to detail and care." },
+  { icon: Heart, title: "Here for You", copy: "Local, responsive service focused on customer satisfaction." },
+];
+
+const featuredCities = cities.slice(0, 8);
 
 export default function HomePage() {
   return (
     <>
-      {/* Hero — split editorial layout, no photography */}
-      <section className="relative overflow-hidden bg-cream pt-32 md:pt-36">
-        <div className="container-lux grid items-center gap-16 pb-20 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 lg:pb-28">
+      {/* Hero */}
+      <section className="bg-warm-white pt-28 md:pt-32">
+        <div className="container-lux grid items-center gap-12 pb-16 lg:grid-cols-2 lg:gap-16 lg:pb-24">
           <div>
-            <p className="eyebrow mb-5">Dallas–Fort Worth Metroplex</p>
-            <h1 className="max-w-xl text-4xl leading-[1.08] text-charcoal sm:text-5xl md:text-6xl">
-              Luxury Custom Window Treatments Designed for Texas Homes
+            <p className="eyebrow mb-5">Beautiful Windows. Elevated Living.</p>
+            <h1 className="text-4xl leading-[1.1] text-charcoal sm:text-5xl md:text-6xl">
+              Custom
+              <br />
+              Window Treatments
+              <br />
+              Designed for Your Home
             </h1>
             <p className="mt-6 max-w-md text-[15px] leading-relaxed text-charcoal-soft">
-              Plantation shutters, roller shades, motorized systems, and custom drapery — designed, measured, and installed by one local team, from your first consultation to the final walkthrough.
+              Custom shutters, shades, and drapery designed to elevate your home with timeless style, function, and craftsmanship.
             </p>
-            <div className="mt-7 flex flex-wrap gap-x-2.5 gap-y-2">
-              {products.map((p) => (
-                <span key={p} className="rounded-full border border-charcoal/15 px-4 py-1.5 text-[12px] font-medium text-charcoal-soft">
-                  {p}
-                </span>
-              ))}
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Button href="/quote" size="lg">Request a Free Consultation</Button>
+              <Button href="/services" size="lg" variant="secondary" icon={false}>View Our Services</Button>
             </div>
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Button href="/quote" size="lg">Get Free Consultation</Button>
-              <Button href="/gallery" size="lg" variant="secondary" icon={false}>Explore Styles</Button>
+
+            <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-charcoal/10 pt-8 sm:grid-cols-4">
+              {heroTrustPoints.map(({ icon: Icon, label }) => (
+                <div key={label} className="flex flex-col items-start gap-2.5">
+                  <Icon className="h-6 w-6 text-oak-dark" strokeWidth={1.25} aria-hidden="true" />
+                  <p className="text-[11px] font-semibold uppercase leading-snug tracking-wide text-charcoal">
+                    {label.split("\n").map((line, i) => (
+                      <span key={i} className="block">{line}</span>
+                    ))}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
-          <FadeIn delay={0.1} className="relative mx-auto aspect-[4/5] w-full max-w-sm lg:max-w-none">
-            <WindowArt variant="louver" tone="light" className="h-full w-full shadow-xl shadow-charcoal/10" />
+          <FadeIn delay={0.1} className="aspect-[4/5] w-full overflow-hidden rounded-sm lg:aspect-[3/4]">
+            <SceneImage scene="living-room" media={homeMedia.hero} className="h-full w-full" priority />
           </FadeIn>
         </div>
       </section>
 
-      {/* Why Us */}
-      <section className="py-20 lg:py-28">
+      {/* Services grid */}
+      <section className="bg-cream py-20 lg:py-28">
         <div className="container-lux">
-          <SectionHeading eyebrow="Why BT Home Designs" title="An experience built like the finished product" align="center" className="mx-auto" />
-          <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {whyUs.map(({ icon: Icon, title, copy }, i) => (
-              <FadeIn key={title} delay={i * 0.1}>
-                <div className="border-t border-charcoal/15 pt-6">
-                  <Icon className="h-6 w-6 text-oak-dark" strokeWidth={1.25} aria-hidden="true" />
-                  <h3 className="mt-5 font-display text-xl text-charcoal">{title}</h3>
-                  <p className="mt-2.5 text-[14px] leading-relaxed text-charcoal-soft">{copy}</p>
+          <SectionHeading eyebrow="Shop by Style" title="Custom Solutions for Every Window" align="center" className="mx-auto" />
+          <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+            {services.map((s, i) => (
+              <FadeIn key={s.slug} delay={(i % 7) * 0.05}>
+                <Link
+                  href={`/services/${s.slug}`}
+                  className="group flex h-full flex-col items-center rounded-sm border border-charcoal/10 bg-warm-white p-5 text-center transition-colors hover:border-oak-dark"
+                >
+                  <WindowArt variant={s.visual} tone="light" className="h-16 w-16 rounded-full" />
+                  <p className="mt-4 text-[13px] font-semibold uppercase tracking-wide text-charcoal">{s.name}</p>
+                  <p className="mt-2 flex-1 text-[12px] leading-relaxed text-charcoal-soft">{s.shortTagline}</p>
+                  <ArrowUpRight className="mt-4 h-4 w-4 text-oak-dark transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+                </Link>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BT Home Designs Difference */}
+      <section className="bg-matte-black py-16 text-warm-white lg:py-20">
+        <div className="container-lux">
+          <p className="eyebrow mb-10 !text-oak-light text-center sm:text-left">The BT Home Designs Difference</p>
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            {differenceColumns.map(({ icon: Icon, title, copy }, i) => (
+              <FadeIn key={title} delay={i * 0.08}>
+                <div className={i > 0 ? "border-t border-warm-white/10 pt-6 sm:border-t-0 sm:border-l sm:pl-8 sm:pt-0" : ""}>
+                  <Icon className="h-6 w-6 text-oak-light" strokeWidth={1.25} aria-hidden="true" />
+                  <p className="mt-4 font-display text-lg text-warm-white">{title}</p>
+                  <p className="mt-2 text-[13px] leading-relaxed text-warm-white/60">{copy}</p>
                 </div>
               </FadeIn>
             ))}
@@ -77,71 +118,104 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Find Your Perfect Window Treatment — replaces both the old photo
-          grid and the old "gallery preview" section */}
-      <section className="bg-charcoal py-20 text-warm-white lg:py-28">
-        <div className="container-lux">
-          <SectionHeading
-            eyebrow="Find Your Perfect Window Treatment"
-            title="Seven ways to shape the light in your home"
-            tone="light"
-          />
-          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((s, i) => (
-              <FadeIn key={s.slug} delay={(i % 3) * 0.08}>
-                <Link
-                  href={`/services/${s.slug}`}
-                  className="group flex h-full flex-col justify-between rounded-sm border border-warm-white/10 bg-warm-white/[0.03] p-7 transition-colors hover:border-oak-light/40 hover:bg-warm-white/[0.06]"
-                >
-                  <div>
-                    <WindowArt variant={s.visual} tone="dark" className="h-16 w-16 rounded-full" />
-                    <p className="mt-6 font-display text-xl text-warm-white">{s.name}</p>
-                    <p className="mt-2 text-[13px] leading-relaxed text-warm-white/60">{s.tagline}</p>
-                    <p className="mt-4 text-[12px] font-medium text-oak-light">{s.benefits[0].title}</p>
-                  </div>
-                  <span className="mt-6 inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-warm-white/80 group-hover:text-oak-light">
-                    Learn More <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
-                  </span>
-                </Link>
-              </FadeIn>
-            ))}
+      {/* About */}
+      <section className="py-20 lg:py-28">
+        <div className="container-lux grid gap-14 lg:grid-cols-2 lg:items-center">
+          <FadeIn>
+            <SceneImage scene="dining-room" media={homeMedia.about} className="aspect-[4/3] w-full overflow-hidden rounded-sm lg:aspect-[4/5]" />
+          </FadeIn>
+          <FadeIn delay={0.1}>
+            <p className="eyebrow mb-4">About BT Home Designs</p>
+            <h2 className="text-3xl leading-[1.15] text-charcoal md:text-4xl">
+              Elevating Homes Across
+              <br />
+              Dallas–Fort Worth
+            </h2>
+            <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-charcoal-soft">
+              We believe window treatments are more than a finishing touch — they transform the way a home looks, feels, and functions. From consultation to installation, we make the process seamless and enjoyable.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-6">
+              <Button href="/about" variant="secondary">Learn More About Us</Button>
+              {(business.stats.homesCompleted || business.stats.yearsExperience || business.reviews.averageRating) && (
+                <div className="flex gap-8">
+                  {business.stats.homesCompleted && (
+                    <div>
+                      <p className="font-display text-2xl text-charcoal">{business.stats.homesCompleted}+</p>
+                      <p className="text-[11px] uppercase tracking-wide text-charcoal-soft">Homes Enhanced</p>
+                    </div>
+                  )}
+                  {business.reviews.averageRating && (
+                    <div>
+                      <p className="font-display text-2xl text-charcoal">{business.reviews.averageRating}★</p>
+                      <p className="text-[11px] uppercase tracking-wide text-charcoal-soft">Customer Rating</p>
+                    </div>
+                  )}
+                  {business.stats.yearsExperience && (
+                    <div>
+                      <p className="font-display text-2xl text-charcoal">{business.stats.yearsExperience}+</p>
+                      <p className="text-[11px] uppercase tracking-wide text-charcoal-soft">Years of Experience</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* Financing */}
+      <section className="border-y border-charcoal/10 bg-cream-deep/60 py-8">
+        <div className="container-lux flex flex-col items-center justify-between gap-6 sm:flex-row">
+          <div>
+            <p className="font-display text-xl text-charcoal">Flexible Financing Available</p>
+            <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-charcoal-soft">{business.policies.financing}</p>
           </div>
-          <div className="mt-10 text-center">
-            <Button href="/services" variant="light">Explore All Services</Button>
+          <div className="flex items-center gap-6">
+            {business.policies.financingProvider && (
+              <p className="text-[11px] uppercase tracking-wide text-charcoal-soft">
+                Financing powered by <span className="font-semibold text-charcoal">{business.policies.financingProvider}</span>
+              </p>
+            )}
+            <Button href="/contact" variant="secondary" icon={false}>Learn More</Button>
           </div>
         </div>
       </section>
 
-      {/* Trust badges */}
-      <section className="border-y border-charcoal/10 bg-cream py-14">
-        <div className="container-lux">
-          <TrustBadges />
-        </div>
-      </section>
+      <Testimonials />
 
-      {/* Trust section — replaces illustrative testimonials with factual claims only */}
+      {/* Service Area */}
       <section className="py-20 lg:py-28">
         <div className="container-lux">
-          <TrustSection />
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading eyebrow="Proudly Serving" title="Dallas–Fort Worth & Surrounding Areas" />
+            <Button href="/service-area" variant="secondary">View All Cities</Button>
+          </div>
+          <div className="mt-10 flex flex-wrap gap-3">
+            {featuredCities.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/service-area/${c.slug}`}
+                className="rounded-full border border-charcoal/15 px-5 py-2.5 text-[13px] font-medium text-charcoal-soft transition-colors hover:border-oak-dark hover:text-oak-dark"
+              >
+                {c.name}, TX
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
-      <FinancingSection />
-
       {/* Final CTA */}
-      <section className="relative overflow-hidden bg-matte-black py-24 text-center lg:py-32">
-        <div className="container-lux relative z-10">
-          <p className="eyebrow mb-5 !text-oak-light">Ready When You Are</p>
+      <section className="bg-matte-black py-24 text-center lg:py-32">
+        <div className="container-lux">
           <h2 className="mx-auto max-w-2xl text-3xl text-warm-white md:text-5xl">
-            Let&apos;s design the light in every room
+            Let&apos;s Create Something Beautiful Together
           </h2>
           <p className="mx-auto mt-5 max-w-md text-[15px] text-warm-white/60">
-            Schedule a free, no-pressure in-home consultation with a BT Home Designs specialist.
+            Schedule your free in-home consultation today.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-4">
-            <Button href="/quote" size="lg">Schedule Free Consultation</Button>
-            <Button href="/contact" size="lg" variant="secondary" icon={false} className="!border-warm-white/25 !text-warm-white hover:!bg-warm-white hover:!text-charcoal">
-              Request Quote
+            <Button href="/quote" size="lg">
+              Request My Free Consultation
             </Button>
           </div>
         </div>

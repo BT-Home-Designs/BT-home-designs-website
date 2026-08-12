@@ -103,8 +103,10 @@ export function Footer() {
       <div className="border-t border-warm-white/10">
         <div className="container-lux flex flex-col items-center justify-between gap-3 py-6 text-[11px] text-warm-white/40 md:flex-row">
           <p>© {year} {business.name}. Family-owned &amp; locally operated in North Texas.</p>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap justify-center gap-6">
             <Link href="/" className="hover:text-warm-white/70">Home</Link>
+            <Link href="/about" className="hover:text-warm-white/70">About</Link>
+            <Link href="/gallery" className="hover:text-warm-white/70">Gallery</Link>
             <Link href="/quote" className="hover:text-warm-white/70">Request a Quote</Link>
             <Link href="/contact" className="hover:text-warm-white/70">Contact</Link>
           </div>

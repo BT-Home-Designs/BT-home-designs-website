@@ -5,6 +5,8 @@ export type Service = {
   name: string;
   shortName: string;
   tagline: string;
+  /** Very short (2-6 word) card copy used in compact grids like the homepage. */
+  shortTagline: string;
   heroCopy: string;
   description: string;
   /** Which CSS/SVG decorative motif (components/WindowArt.tsx) represents this service. */
@@ -21,6 +23,7 @@ export const services: Service[] = [
     name: "Plantation Shutters",
     shortName: "Shutters",
     tagline: "Architectural, timeless, built into the home",
+    shortTagline: "Timeless beauty built to last.",
     heroCopy:
       "Solid hardwood and composite shutters, hand-fitted to every window in your Texas home — the closest thing to permanent architecture a window treatment can be.",
     description:
@@ -52,6 +55,7 @@ export const services: Service[] = [
     name: "Roller Shades",
     shortName: "Roller Shades",
     tagline: "Clean lines, quiet operation, endless fabric options",
+    shortTagline: "Sleek, modern & versatile.",
     heroCopy:
       "A single flat plane of fabric that rolls away out of sight — roller shades bring a tailored, minimal look to any room without competing with your architecture.",
     description:
@@ -83,6 +87,7 @@ export const services: Service[] = [
     name: "Motorized Shades",
     shortName: "Motorized",
     tagline: "Whole-home light control, one tap or one voice command",
+    shortTagline: "Effortless comfort at your fingertips.",
     heroCopy:
       "Raise every shade in the house at sunrise, close the west wall automatically at 4pm, or set them from bed with your phone — motorization built into the home, not bolted on.",
     description:
@@ -114,6 +119,7 @@ export const services: Service[] = [
     name: "Zebra Shades",
     shortName: "Zebra Shades",
     tagline: "Alternating sheer and solid bands, dialed to the degree",
+    shortTagline: "Light control with modern style.",
     heroCopy:
       "Two layers of fabric on one track let you dial in exactly how much of the outside world you want to see — from soft diffused daylight to full privacy.",
     description:
@@ -145,6 +151,7 @@ export const services: Service[] = [
     name: "Woven Woods",
     shortName: "Woven Woods",
     tagline: "Natural grasses and reeds, woven by hand",
+    shortTagline: "Natural textures. Organic warmth.",
     heroCopy:
       "Bamboo, jute, and reed woven into a warm, textural shade that brings an organic material into rooms that call for something softer than a hard finish.",
     description:
@@ -176,6 +183,7 @@ export const services: Service[] = [
     name: "Custom Drapery",
     shortName: "Drapery",
     tagline: "Floor-to-ceiling softness, made to your exact windows",
+    shortTagline: "Elegant fabrics. Tailored to you.",
     heroCopy:
       "Full-length drapery, hand-sewn to your fabric, lining, and hardware selections — the finishing layer that makes a room feel designed rather than decorated.",
     description:
@@ -207,6 +215,7 @@ export const services: Service[] = [
     name: "Exterior Shades",
     shortName: "Exterior",
     tagline: "Take the living room outside",
+    shortTagline: "Comfort. Shade. Outdoor living.",
     heroCopy:
       "Motorized solar screens for patios, porches, and outdoor kitchens — built to handle Texas wind and sun while keeping the space usable ten months a year.",
     description:

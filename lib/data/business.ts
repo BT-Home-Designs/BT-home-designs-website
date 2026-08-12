@@ -19,9 +19,9 @@
 export const business = {
   name: "BT Home Designs",
   legalName: "BT Home Designs LLC", // PLACEHOLDER — confirm registered legal entity name
-  tagline: "Luxury Custom Window Treatments",
+  tagline: "Custom Window Treatments",
   description:
-    "Luxury custom plantation shutters, roller shades, motorized shades, and drapery for Dallas–Fort Worth homes.",
+    "Custom plantation shutters, roller shades, motorized shades, and drapery for Dallas–Fort Worth homes.",
   founded: null as number | null, // PLACEHOLDER — e.g. 2010, if the business wants a founding year displayed
 
   contact: {
@@ -66,6 +66,11 @@ export const business = {
     deposit: "A deposit is required to begin production; exact terms are confirmed at consultation.", // PLACEHOLDER — confirm real deposit policy
     financing: "Flexible financing options may be available for qualifying projects.", // PLACEHOLDER — confirm real financing terms/partner
     consultation: "Free, no-pressure in-home consultation — a specialist brings samples to your actual windows and light.",
+    // Only populate with a real, contracted financing partner name. The
+    // homepage financing banner only shows a "Financing powered by ..."
+    // credit line when this is set, so no partner is implied until one
+    // is actually confirmed.
+    financingProvider: null as string | null,
   },
 
   // Only populate once a real, verifiable count/rating exists. Leaving
@@ -74,6 +79,14 @@ export const business = {
   reviews: {
     count: null as number | null,
     averageRating: null as number | null,
+  },
+
+  // Homepage "stats" row (homes completed, years of experience, etc.).
+  // Every value defaults to null and is only rendered once set to a
+  // real, confirmed number — never estimated or invented.
+  stats: {
+    homesCompleted: null as number | null,
+    yearsExperience: null as number | null,
   },
 
   // Only populate with real, confirmed warranty language. Do not infer or

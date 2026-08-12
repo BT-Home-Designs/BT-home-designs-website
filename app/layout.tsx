@@ -17,7 +17,7 @@ const ogImage = "/images/hero/og-image.png";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${business.name} | Luxury Custom Window Treatments in DFW`,
+    default: `${business.name} | Custom Window Treatments in DFW`,
     template: `%s | ${business.name}`,
   },
   description: `${business.description} Free in-home consultation, expert measuring, and professional installation.`,
@@ -34,13 +34,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: business.name,
-    title: `${business.name} | Luxury Custom Window Treatments in DFW`,
+    title: `${business.name} | Custom Window Treatments in DFW`,
     description: business.description,
     images: [{ url: ogImage, width: 1200, height: 630, alt: business.name }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${business.name} | Luxury Custom Window Treatments in DFW`,
+    title: `${business.name} | Custom Window Treatments in DFW`,
     description: "Plantation shutters, shades, and drapery — designed for Texas homes.",
     images: [ogImage],
   },
