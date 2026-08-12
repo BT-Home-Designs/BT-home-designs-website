@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "./icons";
 import { services } from "@/lib/data/services";
 import { cities } from "@/lib/data/cities";
@@ -10,6 +10,7 @@ export function Footer() {
   const featuredCities = cities.slice(0, 8);
   const { social } = business;
   const hasSocial = Boolean(social.instagram || social.facebook);
+  const hasContactDetail = business.contact.phoneVerified || business.contact.emailVerified || business.address.isVerified;
 
   return (
     <footer className="bg-matte-black text-warm-white">
@@ -69,34 +70,47 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="eyebrow !text-oak-light mb-5">Visit or Call</p>
-          <ul className="space-y-4 text-[13px] text-warm-white/70">
-            <li className="flex gap-3">
-              <MapPin className="h-4 w-4 shrink-0 text-oak-light" strokeWidth={1.5} aria-hidden="true" />
-              <span>
-                {business.address.isVerified && (
-                  <>
+          <p className="eyebrow !text-oak-light mb-5">Get In Touch</p>
+          <p className="text-[13px] leading-relaxed text-warm-white/70">{business.serviceAreaSummary}</p>
+
+          {hasContactDetail && (
+            <ul className="mt-5 space-y-4 text-[13px] text-warm-white/70">
+              {business.address.isVerified && (
+                <li className="flex gap-3">
+                  <MapPin className="h-4 w-4 shrink-0 text-oak-light" strokeWidth={1.5} aria-hidden="true" />
+                  <span>
                     {business.address.street}
                     {business.address.suite && <>, {business.address.suite}</>}
                     <br />
-                  </>
-                )}
-                {business.address.city}, {business.address.state}
-                {business.address.isVerified && business.address.postalCode && ` ${business.address.postalCode}`}
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <Phone className="h-4 w-4 shrink-0 text-oak-light" strokeWidth={1.5} aria-hidden="true" />
-              <a href={`tel:${business.contact.phone}`} className="hover:text-warm-white">{business.contact.phoneDisplay}</a>
-            </li>
-            <li className="flex gap-3">
-              <Mail className="h-4 w-4 shrink-0 text-oak-light" strokeWidth={1.5} aria-hidden="true" />
-              <a href={`mailto:${business.contact.email}`} className="hover:text-warm-white">{business.contact.email}</a>
-            </li>
-          </ul>
-          <p className="mt-6 text-[12px] leading-relaxed text-warm-white/45">
-            {business.hours.map((h) => `${h.days}: ${h.time}`).join(" · ")}
-          </p>
+                    {business.address.city}, {business.address.state}
+                    {business.address.postalCode && ` ${business.address.postalCode}`}
+                  </span>
+                </li>
+              )}
+              {business.contact.phoneVerified && (
+                <li className="flex gap-3">
+                  <Phone className="h-4 w-4 shrink-0 text-oak-light" strokeWidth={1.5} aria-hidden="true" />
+                  <a href={`tel:${business.contact.phone}`} className="hover:text-warm-white">{business.contact.phoneDisplay}</a>
+                </li>
+              )}
+              {business.contact.emailVerified && (
+                <li className="flex gap-3">
+                  <Mail className="h-4 w-4 shrink-0 text-oak-light" strokeWidth={1.5} aria-hidden="true" />
+                  <a href={`mailto:${business.contact.email}`} className="hover:text-warm-white">{business.contact.email}</a>
+                </li>
+              )}
+            </ul>
+          )}
+
+          {business.hoursVerified && (
+            <p className="mt-6 text-[12px] leading-relaxed text-warm-white/45">
+              {business.hours.map((h) => `${h.days}: ${h.time}`).join(" · ")}
+            </p>
+          )}
+
+          <Link href="/contact" className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-oak-light hover:text-warm-white">
+            Contact Us <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
         </div>
       </div>
 

@@ -158,9 +158,11 @@ export function Navbar() {
                 <Button href="/quote" className="w-full justify-center" icon={false}>
                   Request a Consultation
                 </Button>
-                <a href={`tel:${business.contact.phone}`} className="flex items-center justify-center gap-2 py-2 text-[14px] font-medium text-charcoal">
-                  <Phone className="h-4 w-4" aria-hidden="true" /> {business.contact.phoneDisplay}
-                </a>
+                {business.contact.phoneVerified && (
+                  <a href={`tel:${business.contact.phone}`} className="flex items-center justify-center gap-2 py-2 text-[14px] font-medium text-charcoal">
+                    <Phone className="h-4 w-4" aria-hidden="true" /> {business.contact.phoneDisplay}
+                  </a>
+                )}
               </div>
             </div>
           </motion.div>

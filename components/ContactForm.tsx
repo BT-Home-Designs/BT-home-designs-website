@@ -29,7 +29,11 @@ export function ContactForm() {
       }
       setSubmitted(true);
     } catch {
-      setError(`Something went wrong sending your message. Please call us at ${business.contact.phoneDisplay}.`);
+      setError(
+        business.contact.phoneVerified
+          ? `Something went wrong sending your message. Please call us at ${business.contact.phoneDisplay}.`
+          : "Something went wrong sending your message. Please try again in a moment."
+      );
     } finally {
       setSubmitting(false);
     }

@@ -48,8 +48,8 @@ export function WindowArt({
                 rx="7"
                 y={y}
                 fill={i % 2 === 0 ? oak : oakLight}
-                initial={reduceMotion ? false : { rotate: -18, opacity: 0 }}
-                animate={reduceMotion ? undefined : { rotate: 0, opacity: 1 }}
+                initial={reduceMotion ? false : { rotate: -18 }}
+                animate={reduceMotion ? undefined : { rotate: 0 }}
                 transition={{ duration: 0.7, delay: 0.15 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
                 style={{ transformOrigin: `200px ${y + 7}px` }}
               />
@@ -59,17 +59,7 @@ export function WindowArt({
         {variant === "roller" && (
           <>
             <rect x="30" y="30" width="340" height="26" fill={oakDark} />
-            <motion.rect
-              x="46"
-              y="66"
-              width="308"
-              height="340"
-              fill={oakLight}
-              initial={reduceMotion ? false : { scaleY: 0 }}
-              animate={reduceMotion ? undefined : { scaleY: 1 }}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-              style={{ transformOrigin: "200px 66px" }}
-            />
+            <rect x="46" y="66" width="308" height="340" fill={oakLight} />
             {Array.from({ length: 6 }).map((_, i) => (
               <rect key={i} x="46" y={110 + i * 48} width="308" height="2" fill={bg} opacity={0.3} />
             ))}

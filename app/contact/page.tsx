@@ -21,7 +21,7 @@ export default function ContactPage() {
         <SectionHeading
           eyebrow="Get In Touch"
           title="We'd love to see your windows"
-          copy="Call, email, or send a message below — a real person from our team will respond within one business day."
+          copy="Send a message below and a real person from our team will respond within one business day."
           className="mt-8 max-w-2xl"
         />
       </div>
@@ -39,20 +39,26 @@ export default function ContactPage() {
             {business.address.city}, {business.address.state}
             {business.address.isVerified && business.address.postalCode && ` ${business.address.postalCode}`}
           </InfoRow>
-          <InfoRow icon={Phone} label="Phone">
-            <a href={`tel:${business.contact.phone}`} className="hover:text-oak-dark">{business.contact.phoneDisplay}</a>
-          </InfoRow>
-          <InfoRow icon={Mail} label="Email">
-            <a href={`mailto:${business.contact.email}`} className="hover:text-oak-dark">{business.contact.email}</a>
-          </InfoRow>
-          <InfoRow icon={Clock} label="Business Hours">
-            {business.hours.map((h, i) => (
-              <span key={h.days}>
-                {h.days}: {h.time}
-                {i < business.hours.length - 1 && <br />}
-              </span>
-            ))}
-          </InfoRow>
+          {business.contact.phoneVerified && (
+            <InfoRow icon={Phone} label="Phone">
+              <a href={`tel:${business.contact.phone}`} className="hover:text-oak-dark">{business.contact.phoneDisplay}</a>
+            </InfoRow>
+          )}
+          {business.contact.emailVerified && (
+            <InfoRow icon={Mail} label="Email">
+              <a href={`mailto:${business.contact.email}`} className="hover:text-oak-dark">{business.contact.email}</a>
+            </InfoRow>
+          )}
+          {business.hoursVerified && (
+            <InfoRow icon={Clock} label="Business Hours">
+              {business.hours.map((h, i) => (
+                <span key={h.days}>
+                  {h.days}: {h.time}
+                  {i < business.hours.length - 1 && <br />}
+                </span>
+              ))}
+            </InfoRow>
+          )}
 
           <div>
             <p className="eyebrow mb-3">Service Area</p>

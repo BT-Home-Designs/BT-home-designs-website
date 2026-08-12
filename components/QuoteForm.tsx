@@ -128,7 +128,11 @@ export function QuoteForm() {
       }
       setSubmitted(true);
     } catch {
-      setError(`Something went wrong sending your request. Please call us at ${business.contact.phoneDisplay} and we'll get you scheduled directly.`);
+      setError(
+        business.contact.phoneVerified
+          ? `Something went wrong sending your request. Please call us at ${business.contact.phoneDisplay} and we'll get you scheduled directly.`
+          : "Something went wrong sending your request. Please try again, or reach us through the contact page."
+      );
     } finally {
       setSubmitting(false);
     }

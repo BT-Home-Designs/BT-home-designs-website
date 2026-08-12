@@ -10,7 +10,7 @@ import { TrustSection } from "@/components/TrustSection";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "BT Home Designs is a family-owned window treatment company serving Dallas–Fort Worth with personal service, careful measuring, and a luxury installation experience.",
+    "BT Home Designs is a family-owned window treatment company serving Dallas–Fort Worth with personal service, careful measuring, and a polished installation experience.",
   alternates: { canonical: "/about" },
 };
 
@@ -18,7 +18,7 @@ const values = [
   { icon: Users, title: "Family-Owned", copy: "Founded and still run by the same family, with a name and a reputation on every job we complete." },
   { icon: Heart, title: "Personal Service", copy: "You work with the same consultant from your first appointment through final installation — no call center handoffs." },
   { icon: Ruler, title: "Attention to Detail", copy: "Every opening is measured twice. Reveals, returns, and mounting depth are checked before a single order is placed." },
-  { icon: Sparkles, title: "A Luxury Experience", copy: "From the first phone call to the final walkthrough, the process should feel as considered as the finished room." },
+  { icon: Sparkles, title: "A Considered Experience", copy: "From the first phone call to the final walkthrough, the process should feel as considered as the finished room." },
 ];
 
 const process = [
@@ -113,7 +113,7 @@ export default function AboutPage() {
         <div className="container-lux">
           <h2 className="mx-auto max-w-xl text-3xl text-warm-white md:text-4xl">Let&apos;s meet in your home</h2>
           <div className="mt-8">
-            <Button href="/quote" size="lg">Schedule Free Consultation</Button>
+            <Button href="/quote" size="lg" variant="accent">Schedule Free Consultation</Button>
           </div>
         </div>
       </section>

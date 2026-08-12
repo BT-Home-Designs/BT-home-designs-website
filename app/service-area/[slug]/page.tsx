@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
   if (!city) return {};
   return {
     title: `Custom Window Treatments in ${city.name}, TX`,
-    description: `Luxury plantation shutters, roller shades, motorized shades, and drapery for ${city.name}, TX homes. Free in-home consultation from BT Home Designs.`,
+    description: `Custom plantation shutters, roller shades, motorized shades, and drapery for ${city.name}, TX homes. Free in-home consultation from BT Home Designs.`,
     alternates: { canonical: `/service-area/${city.slug}` },
   };
 }
@@ -143,10 +143,10 @@ export default async function CityPage({ params }: CityPageProps) {
             Schedule your free consultation in {city.name}
           </h2>
           <p className="mx-auto mt-4 max-w-md text-[14px] text-warm-white/60">
-            Call {business.contact.phoneDisplay} or request a time online.
+            {business.contact.phoneVerified ? `Call ${business.contact.phoneDisplay} or request a time online.` : "Request a time online and we'll follow up to confirm."}
           </p>
           <div className="mt-8">
-            <Button href="/quote" size="lg">Get Free Consultation</Button>
+            <Button href="/quote" size="lg" variant="accent">Get Free Consultation</Button>
           </div>
         </div>
       </section>

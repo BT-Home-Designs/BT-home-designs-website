@@ -8,12 +8,13 @@
  * (Navbar, Footer, Contact, Quote, homepage, schema, Open Graph, etc.)
  * updates automatically.
  *
- * Values below marked "PLACEHOLDER" are illustrative only — they were not
- * supplied by the business and must be replaced with verified information
- * before launch. Nothing marked PLACEHOLDER is emitted into structured
- * data (JSON-LD) — see components/LocalBusinessSchema.tsx, which omits
- * unverified fields rather than presenting placeholders to search engines
- * as fact.
+ * VERIFICATION FLAGS: phone, email, address, and hours each have their
+ * own `isVerified` flag. Components check these flags and render NOTHING
+ * for that field when false — no placeholder number, no fake hours — so
+ * an unconfirmed value can sit in this file (for a developer to fill in
+ * later) without ever being shown to a site visitor or emitted into
+ * structured data. Flip a flag to `true` only once that value has been
+ * confirmed as real by the business.
  */
 
 export const business = {
@@ -25,28 +26,35 @@ export const business = {
   founded: null as number | null, // PLACEHOLDER — e.g. 2010, if the business wants a founding year displayed
 
   contact: {
-    phone: "+19725550123", // PLACEHOLDER — E.164 format, used for tel: links and schema
-    phoneDisplay: "(972) 555-0123", // PLACEHOLDER — update in lib/data/business.ts
-    email: "hello@bthomedesigns.com", // PLACEHOLDER — update in lib/data/business.ts
-    isVerified: false, // set true once the above are confirmed real
+    // Not yet confirmed real — phoneVerified is false, so no component
+    // renders this number anywhere (site or schema) until it's set true.
+    phone: "", // PLACEHOLDER — set to a real E.164 number (e.g. "+19725551234") once confirmed
+    phoneDisplay: "", // PLACEHOLDER — set to the matching display format (e.g. "(972) 555-1234")
+    phoneVerified: false,
+
+    email: "hello@bthomedesigns.com", // PLACEHOLDER — confirm this is the real, monitored inbox
+    emailVerified: false,
   },
 
   address: {
-    street: "Update in lib/data/business.ts",
+    street: "", // PLACEHOLDER
     suite: "",
-    city: "Rockwall",
+    city: "Rockwall", // approximate service-area anchor, not asserted as a verified mailing address
     state: "TX",
-    postalCode: "", // PLACEHOLDER — omitted from schema until supplied
-    isVerified: false, // set true once the address is confirmed real
+    postalCode: "",
+    isVerified: false,
   },
 
   serviceAreaSummary: "Serving the Dallas–Fort Worth metroplex",
 
+  // Not yet confirmed real business hours — hoursVerified is false, so
+  // no component displays this schedule until it's set true.
   hours: [
-    { days: "Monday – Friday", time: "8:00 AM – 6:00 PM" },
-    { days: "Saturday", time: "9:00 AM – 3:00 PM" },
-    { days: "Sunday", time: "By appointment" },
+    { days: "Monday – Friday", time: "" },
+    { days: "Saturday", time: "" },
+    { days: "Sunday", time: "" },
   ],
+  hoursVerified: false,
 
   social: {
     instagram: "", // PLACEHOLDER — e.g. "https://instagram.com/bthomedesigns"
@@ -55,16 +63,15 @@ export const business = {
 
   urls: {
     website: "https://www.bthomedesigns.com",
-    // Embeddable map iframe src. Uses a keyless Google Maps query embed
-    // pointed at the city center until a verified street address + Maps
-    // Embed API key are available.
+    // Embeddable map iframe src / directions link. Only rendered once
+    // address.isVerified is true.
     mapsEmbed: "https://maps.google.com/maps?q=Rockwall%2C%20TX&t=&z=11&ie=UTF8&iwloc=&output=embed",
-    mapsDirections: "https://maps.google.com/?q=Rockwall,TX", // PLACEHOLDER — update once address is verified
+    mapsDirections: "https://maps.google.com/?q=Rockwall,TX",
   },
 
   policies: {
     deposit: "A deposit is required to begin production; exact terms are confirmed at consultation.", // PLACEHOLDER — confirm real deposit policy
-    financing: "Flexible financing options may be available for qualifying projects.", // PLACEHOLDER — confirm real financing terms/partner
+    financing: "Flexible financing options may be available for qualifying projects.",
     consultation: "Free, no-pressure in-home consultation — a specialist brings samples to your actual windows and light.",
     // Only populate with a real, contracted financing partner name. The
     // homepage financing banner only shows a "Financing powered by ..."

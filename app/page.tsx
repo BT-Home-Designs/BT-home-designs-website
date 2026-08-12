@@ -4,13 +4,11 @@ import { ArrowUpRight, Award, Hammer, Heart, Home as HomeIcon, ShieldCheck, User
 import { Button } from "@/components/Button";
 import { SectionHeading } from "@/components/SectionHeading";
 import { FadeIn } from "@/components/FadeIn";
-import { SceneImage } from "@/components/SceneImage";
 import { WindowArt } from "@/components/WindowArt";
 import { Testimonials } from "@/components/Testimonials";
 import { services } from "@/lib/data/services";
 import { cities } from "@/lib/data/cities";
 import { business } from "@/lib/data/business";
-import { homeMedia } from "@/lib/data/media";
 
 export const metadata: Metadata = {
   title: "Custom Window Treatments Dallas–Fort Worth | Shutters, Shades & Drapery",
@@ -34,6 +32,12 @@ const differenceColumns = [
 ];
 
 const featuredCities = cities.slice(0, 8);
+
+const processSteps = [
+  { step: "01", title: "In-Home Consultation", copy: "A specialist visits your home with real samples and walks every window with you." },
+  { step: "02", title: "Measure & Design", copy: "Precise measurements and product selection tailored to each opening." },
+  { step: "03", title: "Professional Install", copy: "Trained installers complete the finished work with care and attention to detail." },
+];
 
 export default function HomePage() {
   return (
@@ -72,8 +76,34 @@ export default function HomePage() {
             </div>
           </div>
 
-          <FadeIn delay={0.1} className="aspect-[4/5] w-full overflow-hidden rounded-sm lg:aspect-[3/4]">
-            <SceneImage scene="living-room" media={homeMedia.hero} className="h-full w-full" priority />
+          <FadeIn delay={0.1} className="relative overflow-hidden rounded-sm border border-charcoal/10 bg-cream">
+            {/* Subtle architectural line detail — evokes louvers/mullions without depicting a room or product photo */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden="true">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} className="absolute inset-y-0 w-px bg-oak" style={{ left: `${(i + 1) * (100 / 15)}%` }} />
+              ))}
+            </div>
+            <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
+              <div>
+                <p className="eyebrow mb-3">What We Design</p>
+                <p className="max-w-xs font-display text-3xl leading-[1.2] text-charcoal sm:text-4xl">
+                  Every window, perfectly dressed.
+                </p>
+              </div>
+              <ul className="mt-10 divide-y divide-charcoal/10 border-t border-charcoal/10">
+                {services.slice(0, 5).map((s) => (
+                  <li key={s.slug}>
+                    <Link
+                      href={`/services/${s.slug}`}
+                      className="group flex items-center justify-between gap-4 py-3.5 text-[13px] font-medium uppercase tracking-wide text-charcoal-soft transition-colors hover:text-oak-dark"
+                    >
+                      {s.name}
+                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </FadeIn>
         </div>
       </section>
@@ -119,10 +149,25 @@ export default function HomePage() {
       </section>
 
       {/* About */}
-      <section className="py-20 lg:py-28">
+      <section className="bg-cream py-20 lg:py-28">
         <div className="container-lux grid gap-14 lg:grid-cols-2 lg:items-center">
           <FadeIn>
-            <SceneImage scene="dining-room" media={homeMedia.about} className="aspect-[4/3] w-full overflow-hidden rounded-sm lg:aspect-[4/5]" />
+            <div className="rounded-sm border border-charcoal/10 bg-warm-white p-8 sm:p-10">
+              <p className="eyebrow mb-8">How It Works</p>
+              <div className="space-y-8">
+                {processSteps.map((p, i) => (
+                  <div key={p.step} className={i > 0 ? "border-t border-charcoal/10 pt-8" : ""}>
+                    <div className="flex gap-5">
+                      <span className="font-display text-3xl text-oak">{p.step}</span>
+                      <div>
+                        <p className="font-display text-lg text-charcoal">{p.title}</p>
+                        <p className="mt-1.5 text-[13px] leading-relaxed text-charcoal-soft">{p.copy}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </FadeIn>
           <FadeIn delay={0.1}>
             <p className="eyebrow mb-4">About BT Home Designs</p>
@@ -207,14 +252,15 @@ export default function HomePage() {
       {/* Final CTA */}
       <section className="bg-matte-black py-24 text-center lg:py-32">
         <div className="container-lux">
+          <div className="mx-auto mb-6 h-[2px] w-16 bg-oak" aria-hidden="true" />
           <h2 className="mx-auto max-w-2xl text-3xl text-warm-white md:text-5xl">
             Let&apos;s Create Something Beautiful Together
           </h2>
-          <p className="mx-auto mt-5 max-w-md text-[15px] text-warm-white/60">
+          <p className="mx-auto mt-5 max-w-md text-[15px] text-warm-white/80">
             Schedule your free in-home consultation today.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-4">
-            <Button href="/quote" size="lg">
+            <Button href="/quote" size="lg" variant="accent">
               Request My Free Consultation
             </Button>
           </div>

@@ -7,7 +7,7 @@ type ButtonProps = {
   href?: string;
   onClick?: () => void;
   children: ReactNode;
-  variant?: "primary" | "secondary" | "ghost" | "light";
+  variant?: "primary" | "secondary" | "ghost" | "light" | "accent";
   size?: "md" | "lg";
   className?: string;
   type?: "button" | "submit";
@@ -34,6 +34,10 @@ export function Button({
     secondary: "border border-charcoal/25 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-warm-white",
     ghost: "text-charcoal hover:text-oak-dark underline-offset-4 hover:underline",
     light: "bg-warm-white text-charcoal hover:bg-cream",
+    // For CTA buttons that sit on a dark (bg-matte-black/bg-charcoal)
+    // section, where the "primary" variant's dark fill would blend into
+    // the background and become nearly invisible.
+    accent: "bg-oak text-warm-white hover:bg-oak-dark",
   };
 
   const sizes = {

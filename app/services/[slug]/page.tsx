@@ -155,7 +155,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
             See {service.name.toLowerCase()} in your own home, free
           </h2>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button href="/quote" size="lg">Schedule Free Consultation</Button>
+            <Button href="/quote" size="lg" variant="accent">Schedule Free Consultation</Button>
           </div>
         </div>
       </section>
