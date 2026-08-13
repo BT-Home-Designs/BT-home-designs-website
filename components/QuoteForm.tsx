@@ -50,6 +50,14 @@ const initialState: FormState = {
 
 const steps = ["Contact Info", "Project Details", "Timeline & Budget", "Photos & Schedule", "Review"];
 
+// Shown inline (not silently) when Continue is clicked but the current
+// step isn't valid yet — see `next()` below.
+const STEP_VALIDATION_MESSAGES: Record<number, string> = {
+  0: "Please fill in your name, phone, email, and address to continue.",
+  1: "Please select at least one product and enter an approximate window quantity to continue.",
+  2: "Please select a timeline and estimated budget to continue.",
+};
+
 const timelineOptions = ["As soon as possible", "Within 1 month", "1–3 months", "3–6 months", "Just researching"];
 const budgetOptions = ["Under $2,500", "$2,500–$5,000", "$5,000–$10,000", "$10,000–$25,000", "$25,000+"];
 
@@ -64,6 +72,10 @@ export function QuoteForm() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  // Shown when Continue is clicked on a step that isn't valid yet. Never
+  // silently ignore the click — always tell the user exactly what's
+  // missing. Cleared as soon as they change anything on the step.
+  const [stepError, setStepError] = useState<string | null>(null);
   // Which page the visitor was on immediately before landing on /quote —
   // lets leads be attributed to the service or city page that generated
   // them (e.g. a "Get Free Consultation" click from /services/roller-shades).
@@ -71,24 +83,44 @@ export function QuoteForm() {
   // reading it during the client's initial render.
   const [sourcePage] = useState(() => (typeof document !== "undefined" ? document.referrer || "direct" : "direct"));
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
+    setStepError(null);
+  };
 
-  const toggleProduct = (name: string) =>
+  const toggleProduct = (name: string) => {
     setForm((f) => ({
       ...f,
       products: f.products.includes(name) ? f.products.filter((p) => p !== name) : [...f.products, name],
     }));
+    setStepError(null);
+  };
 
   const canProceed = () => {
-    if (step === 0) return form.name.trim() && form.phone.trim() && form.email.trim() && form.address.trim();
-    if (step === 1) return form.products.length > 0 && form.windowQuantity.trim();
-    if (step === 2) return form.timeline && form.budget;
+    if (step === 0) return Boolean(form.name.trim() && form.phone.trim() && form.email.trim() && form.address.trim());
+    if (step === 1) return Boolean(form.products.length > 0 && form.windowQuantity.trim());
+    if (step === 2) return Boolean(form.timeline && form.budget);
     return true;
   };
 
-  const next = () => setStep((s) => Math.min(s + 1, steps.length - 1));
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  // Continue is always clickable (see the Button usage below — no
+  // `disabled` prop tied to validation anymore). Validation still fully
+  // applies: if the current step isn't complete, we don't advance, but
+  // we always tell the user exactly what's missing rather than leaving
+  // them looking at a button that quietly does nothing.
+  const next = () => {
+    if (!canProceed()) {
+      setStepError(STEP_VALIDATION_MESSAGES[step] ?? "Please complete this step to continue.");
+      return;
+    }
+    setStepError(null);
+    setStep((s) => Math.min(s + 1, steps.length - 1));
+  };
+
+  const back = () => {
+    setStepError(null);
+    setStep((s) => Math.max(s - 1, 0));
+  };
 
   const handleFileSelect = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
@@ -408,28 +440,36 @@ export function QuoteForm() {
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-10 flex items-center justify-between">
-        <button
-          onClick={back}
-          className={cn("text-[13px] font-medium text-charcoal-soft hover:text-charcoal", step === 0 && "invisible")}
-        >
-          Back
-        </button>
-        {step < steps.length - 1 ? (
-          <Button onClick={next} disabled={!canProceed()}>
-            Continue
-          </Button>
-        ) : (
-          <Button onClick={handleSubmit} disabled={submitting || !form.consent}>
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending
-              </>
-            ) : (
-              "Submit Request"
-            )}
-          </Button>
+      <div className="mt-10">
+        {stepError && (
+          <p role="alert" aria-live="assertive" className="mb-4 text-[13px] text-red-700">
+            {stepError}
+          </p>
         )}
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={back}
+            className={cn("text-[13px] font-medium text-charcoal-soft hover:text-charcoal", step === 0 && "invisible")}
+          >
+            Back
+          </button>
+          {step < steps.length - 1 ? (
+            <Button onClick={next}>
+              Continue
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={submitting || !form.consent}>
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending
+                </>
+              ) : (
+                "Submit Request"
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
