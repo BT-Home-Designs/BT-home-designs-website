@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, Upload, X } from "lucide-react";
 import { services } from "@/lib/data/services";
@@ -76,6 +76,10 @@ export function QuoteForm() {
   // silently ignore the click — always tell the user exactly what's
   // missing. Cleared as soon as they change anything on the step.
   const [stepError, setStepError] = useState<string | null>(null);
+  // Same "never silently fail" pattern, scoped to the required consent
+  // checkbox on the Review step. Cleared the moment the box is checked.
+  const [consentError, setConsentError] = useState(false);
+  const consentCheckboxRef = useRef<HTMLInputElement>(null);
   // Which page the visitor was on immediately before landing on /quote —
   // lets leads be attributed to the service or city page that generated
   // them (e.g. a "Get Free Consultation" click from /services/roller-shades).
@@ -155,7 +159,14 @@ export function QuoteForm() {
   };
 
   const handleSubmit = async () => {
-    if (submitting || !form.consent) return;
+    if (submitting) return;
+    if (!form.consent) {
+      setConsentError(true);
+      consentCheckboxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      consentCheckboxRef.current?.focus();
+      return;
+    }
+    setConsentError(false);
     setSubmitting(true);
     setError(null);
     try {
@@ -421,19 +432,37 @@ export function QuoteForm() {
                   </div>
                 ))}
               </dl>
-              <label className="flex items-start gap-3 text-[13px] text-charcoal-soft">
-                <input
-                  type="checkbox"
-                  checked={form.consent}
-                  onChange={(e) => update("consent", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-oak-dark"
-                  required
-                />
-                <span>
-                  I agree to be contacted by BT Home Designs by phone, text, or email about this request. We
-                  won&apos;t share your information with third parties for marketing purposes.
-                </span>
-              </label>
+              <div
+                className={cn(
+                  "rounded-sm border p-3.5 transition-colors",
+                  consentError ? "border-red-300 bg-red-50" : "border-transparent"
+                )}
+              >
+                {consentError && (
+                  <p id="quote-consent-error" role="alert" aria-live="assertive" className="mb-2.5 text-[13px] font-medium text-red-700">
+                    Please check the box below to confirm you agree to be contacted before submitting your request.
+                  </p>
+                )}
+                <label htmlFor="quote-consent" className="flex items-start gap-3 text-[13px] text-charcoal-soft">
+                  <input
+                    id="quote-consent"
+                    ref={consentCheckboxRef}
+                    type="checkbox"
+                    checked={form.consent}
+                    onChange={(e) => {
+                      update("consent", e.target.checked);
+                      if (e.target.checked) setConsentError(false);
+                    }}
+                    aria-invalid={consentError ? "true" : undefined}
+                    aria-describedby={consentError ? "quote-consent-error" : undefined}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-oak-dark"
+                  />
+                  <span>
+                    I agree to be contacted by BT Home Designs by phone, text, or email about this request. We
+                    won&apos;t share your information with third parties for marketing purposes.
+                  </span>
+                </label>
+              </div>
               {error && <p role="alert" aria-live="assertive" className="text-[13px] text-red-700">{error}</p>}
             </div>
           )}
@@ -459,7 +488,7 @@ export function QuoteForm() {
               Continue
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={submitting || !form.consent}>
+            <Button onClick={handleSubmit} disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending
