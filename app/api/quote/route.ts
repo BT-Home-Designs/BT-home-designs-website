@@ -10,24 +10,24 @@ import { randomUUID } from "crypto";
  * success: it returns a real 503 with an honest message, so the site
  * never tells a visitor their request went through when it didn't.
  *
+ * Sender domain (mail.bthomedesigns.com) is configured and verified in
+ * Resend, so the default From address below is a real, deliverable
+ * sender — not a placeholder. RESEND_FROM_EMAIL can still override it if
+ * ever needed (e.g. a different sender for testing).
+ *
  * Email content: subject line identifies the form type, requested
  * service, and lead name ("New Quote Request: Roller Shades — Jane
- * Doe"). Body includes name, email, phone, city, requested service,
- * message, source page, submission time, and consent status. Reply-To
- * is set to the customer's submitted email; the From address is never
- * the customer's address (see RESEND_FROM_EMAIL below).
+ * Doe"). Body includes name, email, phone, city, ZIP code, requested
+ * service, message, source page, available UTM parameters, submission
+ * time, and consent status. Reply-To is set to the customer's submitted
+ * email; the From address is never the customer's address.
  *
- * To activate delivery:
- *   1. Create a Resend account and verify a sending domain (or use their
- *      default onboarding@resend.dev sender for early testing).
- *   2. Set these environment variables in your deployment (e.g. Vercel
- *      Project Settings → Environment Variables):
- *        RESEND_API_KEY          — from the Resend dashboard
- *        LEAD_NOTIFICATION_EMAIL — the inbox that should receive leads
- *        RESEND_FROM_EMAIL       — optional; defaults to a Resend test
- *                                   sender if omitted
- *   3. Redeploy. No code changes are needed — this route picks the
- *      variables up automatically.
+ * Required environment variables (Vercel → Project Settings →
+ * Environment Variables):
+ *   RESEND_API_KEY          — from the Resend dashboard
+ *   LEAD_NOTIFICATION_EMAIL — the inbox that should receive leads
+ *   RESEND_FROM_EMAIL       — optional; defaults to the verified sender
+ *                              below if omitted
  *
  * No rate limiting is implemented on this route. If abuse becomes a
  * problem, the honeypot below catches simple bots, but a determined
@@ -42,6 +42,8 @@ import { randomUUID } from "crypto";
  * metadata — no image bytes are uploaded or transmitted to this route.
  * The UI tells the user this explicitly.
  */
+
+const DEFAULT_FROM_EMAIL = "BT Home Designs Website <leads@mail.bthomedesigns.com>";
 
 const REQUIRED_FIELDS = ["name", "email", "phone"] as const;
 
@@ -61,7 +63,11 @@ const MAX_LENGTHS: Record<string, number> = {
   sourcePage: 500,
   city: 100,
   service: 100,
+  zip: 10,
 };
+
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
+const MAX_UTM_VALUE_LENGTH = 200;
 
 const MAX_PHOTOS = 10;
 const MAX_FILENAME_LENGTH = 200;
@@ -83,6 +89,13 @@ function isPlainString(value: unknown): value is string {
   return typeof value === "string";
 }
 
+// ZIP is optional on both forms; when provided, loosely validate as a US
+// ZIP or ZIP+4 (e.g. "75032" or "75032-1234").
+function isValidZip(value: unknown): boolean {
+  if (!isPlainString(value) || value.trim() === "") return true; // optional
+  return /^\d{5}(-\d{4})?$/.test(value.trim());
+}
+
 // Quote form sends `products` (array, e.g. multiple treatments selected).
 // Contact form sends `service` (single optional dropdown value). Either
 // may be absent — this normalizes both into one display label.
@@ -94,6 +107,18 @@ function getRequestedServiceLabel(submission: Record<string, unknown>): string |
     return submission.service;
   }
   return undefined;
+}
+
+// Formats whichever utm_* values are present (an object with only known
+// keys, validated below) into one readable line, or undefined if none.
+function getUtmSummary(submission: Record<string, unknown>): string | undefined {
+  const utm = submission.utm;
+  if (typeof utm !== "object" || utm === null || Array.isArray(utm)) return undefined;
+  const parts = UTM_KEYS.map((key) => {
+    const value = (utm as Record<string, unknown>)[key];
+    return isPlainString(value) && value.trim() !== "" ? `${key}=${value}` : null;
+  }).filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : undefined;
 }
 
 function escapeHtml(value: string): string {
@@ -111,6 +136,7 @@ function buildLeadEmailHtml(submission: Record<string, unknown>): string {
     ["Email", submission.email],
     ["Phone", submission.phone],
     ["City / Address", submission.city ?? submission.address],
+    ["ZIP Code", submission.zip],
     ["Requested service(s)", getRequestedServiceLabel(submission)],
     ["Window quantity", submission.windowQuantity],
     ["Approx. sizes", submission.approxSizes],
@@ -121,6 +147,7 @@ function buildLeadEmailHtml(submission: Record<string, unknown>): string {
     ["Photos referenced (names only)", Array.isArray(submission.photos) ? submission.photos.join(", ") : undefined],
     ["Consent given", submission.consent ? "Yes" : "No"],
     ["Source page", submission.sourcePage],
+    ["UTM parameters", getUtmSummary(submission)],
     ["Form", submission.source ?? "quote-page"],
     ["Submission ID", submission.id],
     ["Received", submission.receivedAt],
@@ -173,6 +200,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Please provide a valid phone number." }, { status: 400 });
     }
 
+    if (!isValidZip(data.zip)) {
+      return NextResponse.json({ error: "Please provide a valid ZIP code." }, { status: 400 });
+    }
+
     for (const [field, max] of Object.entries(MAX_LENGTHS)) {
       const value = data[field];
       if (typeof value === "string" && value.length > max) {
@@ -183,6 +214,20 @@ export async function POST(request: Request) {
     if (data.products !== undefined) {
       if (!Array.isArray(data.products) || !data.products.every(isPlainString)) {
         return NextResponse.json({ error: "\"products\" must be an array of strings." }, { status: 400 });
+      }
+    }
+
+    if (data.utm !== undefined) {
+      if (typeof data.utm !== "object" || data.utm === null || Array.isArray(data.utm)) {
+        return NextResponse.json({ error: "\"utm\" must be an object." }, { status: 400 });
+      }
+      for (const [key, value] of Object.entries(data.utm as Record<string, unknown>)) {
+        if (!(UTM_KEYS as readonly string[]).includes(key)) {
+          return NextResponse.json({ error: `Unrecognized UTM parameter "${key}".` }, { status: 400 });
+        }
+        if (!isPlainString(value) || value.length > MAX_UTM_VALUE_LENGTH) {
+          return NextResponse.json({ error: `UTM parameter "${key}" is invalid.` }, { status: 400 });
+        }
       }
     }
 
@@ -209,7 +254,7 @@ export async function POST(request: Request) {
 
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     const LEAD_NOTIFICATION_EMAIL = process.env.LEAD_NOTIFICATION_EMAIL;
-    const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "BT Home Designs Website <onboarding@resend.dev>";
+    const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || DEFAULT_FROM_EMAIL;
 
     if (!RESEND_API_KEY || !LEAD_NOTIFICATION_EMAIL) {
       // Honest failure: no delivery destination is configured. Never

@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { FloatingCTA } from "@/components/FloatingCTA";
 import { LocalBusinessSchema } from "@/components/LocalBusinessSchema";
 import { Analytics } from "@/components/Analytics";
+import { UtmCapture } from "@/components/UtmCapture";
 import { business } from "@/lib/data/business";
 
 // Typography: system font stack, no next/font/google or any external font
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <LocalBusinessSchema />
         <Analytics />
+        <UtmCapture />
         <Navbar />
         <main>{children}</main>
         <Footer />

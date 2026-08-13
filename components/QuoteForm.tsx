@@ -6,6 +6,7 @@ import { Check, Loader2, Upload, X } from "lucide-react";
 import { services } from "@/lib/data/services";
 import { business } from "@/lib/data/business";
 import { trackLead } from "@/lib/analytics";
+import { getStoredUtmParams } from "@/lib/utm";
 import { Button } from "./Button";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ type FormState = {
   phone: string;
   email: string;
   address: string;
+  zip: string;
   products: string[];
   windowQuantity: string;
   approxSizes: string;
@@ -33,6 +35,7 @@ const initialState: FormState = {
   phone: "",
   email: "",
   address: "",
+  zip: "",
   products: [],
   windowQuantity: "",
   approxSizes: "",
@@ -131,6 +134,7 @@ export function QuoteForm() {
           ...form,
           photos: form.photos.map((f) => f.name),
           sourcePage,
+          utm: getStoredUtmParams(),
         }),
       });
       if (!res.ok) {
@@ -226,9 +230,22 @@ export function QuoteForm() {
                   <input value={form.email} onChange={(e) => update("email", e.target.value)} className={inputClass} placeholder="jane@email.com" type="email" />
                 </Field>
               </div>
-              <Field label="Home Address">
-                <input value={form.address} onChange={(e) => update("address", e.target.value)} className={inputClass} placeholder="123 Lakeview Drive, Rockwall, TX" />
-              </Field>
+              <div className="grid gap-5 sm:grid-cols-[1fr_140px]">
+                <Field label="Home Address">
+                  <input value={form.address} onChange={(e) => update("address", e.target.value)} className={inputClass} placeholder="123 Lakeview Drive, Rockwall, TX" />
+                </Field>
+                <Field label="ZIP Code">
+                  <input
+                    value={form.zip}
+                    onChange={(e) => update("zip", e.target.value)}
+                    className={inputClass}
+                    placeholder="75032"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    maxLength={10}
+                  />
+                </Field>
+              </div>
             </div>
           )}
 
@@ -357,6 +374,7 @@ export function QuoteForm() {
                   ["Phone", form.phone],
                   ["Email", form.email],
                   ["Address", form.address],
+                  ["ZIP Code", form.zip || "—"],
                   ["Products", form.products.join(", ") || "—"],
                   ["Window Quantity", form.windowQuantity || "—"],
                   ["Approx. Sizes", form.approxSizes || "—"],

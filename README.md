@@ -154,7 +154,7 @@ Same pattern as services: `lib/data/cities.ts` is the single data source, render
 - The route validates required fields (name, email, phone), email format, a real-world-shaped phone number, string length limits, and a honeypot field (silently drops likely-bot submissions).
 - Both forms require the visitor to check a consent checkbox before submitting ("I agree to be contacted...").
 - The Quote form captures `sourcePage` (the referring page, e.g. a specific service or city page) so leads can be attributed to whatever page generated them.
-- **Delivery is implemented via [Resend](https://resend.com), gated entirely behind environment variables.** If `RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` are both set, a valid submission sends a real email to that inbox with all submitted details (name, contact info, requested service, city, message, source page, timestamp, consent). **If either variable is unset — which is the current state, since no Resend account has been created — the route returns an honest `503` and the form displays that failure to the visitor. It never claims success when nothing was actually delivered.** See `.env.example` for the exact variable names and setup steps.
+- **Delivery is implemented via [Resend](https://resend.com), gated entirely behind environment variables.** If `RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` are both set, a valid submission sends a real email from a verified sender (`leads@mail.bthomedesigns.com`, on the verified `mail.bthomedesigns.com` sending domain) to that inbox, with all submitted details (name, contact info, city, ZIP code, requested service, message, source page, available UTM parameters, timestamp, consent). Reply-To is set to the customer's submitted email so replying goes straight to them. **If `RESEND_API_KEY` or `LEAD_NOTIFICATION_EMAIL` is unset, the route returns an honest `503` and the form displays that failure to the visitor — it never claims success when nothing was actually delivered.** See `.env.example` for the exact variable names.
 - **Photos are not uploaded.** The Quote form's photo step only sends selected file *names* as JSON metadata — no image bytes are transmitted anywhere. The UI tells the user this explicitly ("a team member will follow up separately to collect the actual images"). Client-side validation restricts selections to JPG/PNG/WEBP, 8MB per file, 10 files max, before they're even added to form state.
 
 ## Connecting Production Storage
@@ -177,7 +177,7 @@ See `.env.example` for the full list with descriptions. Summary:
 ```bash
 RESEND_API_KEY=                 # required for lead delivery to work at all
 LEAD_NOTIFICATION_EMAIL=        # required — the inbox that receives leads
-RESEND_FROM_EMAIL=              # optional, defaults to a Resend test sender
+RESEND_FROM_EMAIL=              # optional, defaults to the verified leads@mail.bthomedesigns.com sender
 NEXT_PUBLIC_GA_MEASUREMENT_ID=  # optional — Google Analytics 4, "G-XXXXXXXXXX"
 NEXT_PUBLIC_GSC_VERIFICATION=   # optional — Google Search Console ownership token
 ```

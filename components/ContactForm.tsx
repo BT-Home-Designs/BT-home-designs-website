@@ -6,9 +6,10 @@ import { Button } from "./Button";
 import { business } from "@/lib/data/business";
 import { trackLead } from "@/lib/analytics";
 import { services } from "@/lib/data/services";
+import { getStoredUtmParams } from "@/lib/utm";
 
 export function ContactForm() {
-  const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", service: "", message: "", consent: false, website: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", zip: "", service: "", message: "", consent: false, website: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export function ContactForm() {
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, source: "contact-page", sourcePage }),
+        body: JSON.stringify({ ...form, source: "contact-page", sourcePage, utm: getStoredUtmParams() }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -103,22 +104,22 @@ export function ContactForm() {
           />
         </div>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label htmlFor="contact-email" className="sr-only">Email</label>
-          <input
-            id="contact-email"
-            required
-            type="email"
-            placeholder="Email"
-            autoComplete="email"
-            aria-describedby={error ? errorId : undefined}
-            aria-invalid={error ? true : undefined}
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className={inputClass}
-          />
-        </div>
+      <div>
+        <label htmlFor="contact-email" className="sr-only">Email</label>
+        <input
+          id="contact-email"
+          required
+          type="email"
+          placeholder="Email"
+          autoComplete="email"
+          aria-describedby={error ? errorId : undefined}
+          aria-invalid={error ? true : undefined}
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          className={inputClass}
+        />
+      </div>
+      <div className="grid gap-5 sm:grid-cols-[1fr_140px]">
         <div>
           <label htmlFor="contact-city" className="sr-only">City</label>
           <input
@@ -127,6 +128,19 @@ export function ContactForm() {
             autoComplete="address-level2"
             value={form.city}
             onChange={(e) => setForm({ ...form, city: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor="contact-zip" className="sr-only">ZIP Code</label>
+          <input
+            id="contact-zip"
+            placeholder="ZIP Code (optional)"
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={10}
+            value={form.zip}
+            onChange={(e) => setForm({ ...form, zip: e.target.value })}
             className={inputClass}
           />
         </div>
