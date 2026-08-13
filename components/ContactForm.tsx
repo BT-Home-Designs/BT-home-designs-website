@@ -5,9 +5,10 @@ import { Check, Loader2 } from "lucide-react";
 import { Button } from "./Button";
 import { business } from "@/lib/data/business";
 import { trackLead } from "@/lib/analytics";
+import { services } from "@/lib/data/services";
 
 export function ContactForm() {
-  const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", message: "", consent: false, website: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", service: "", message: "", consent: false, website: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,6 +129,23 @@ export function ContactForm() {
             onChange={(e) => setForm({ ...form, city: e.target.value })}
             className={inputClass}
           />
+        </div>
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label htmlFor="contact-service" className="sr-only">What are you interested in?</label>
+          <select
+            id="contact-service"
+            value={form.service}
+            onChange={(e) => setForm({ ...form, service: e.target.value })}
+            className={inputClass}
+          >
+            <option value="">What are you interested in? (optional)</option>
+            {services.map((s) => (
+              <option key={s.slug} value={s.name}>{s.name}</option>
+            ))}
+            <option value="Not sure / General question">Not sure / General question</option>
+          </select>
         </div>
       </div>
       <div>

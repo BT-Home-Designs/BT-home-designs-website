@@ -6,11 +6,16 @@ import { randomUUID } from "crypto";
  *
  * Sends an email notification via Resend (https://resend.com) when both
  * RESEND_API_KEY and LEAD_NOTIFICATION_EMAIL are set as environment
- * variables. Neither is set in this repository or any deployment config
- * found in it — no account has been created and no key has been invented.
- * Until both are configured, this route does NOT report success: it
- * returns a real 503 with an honest message, so the site never tells a
- * visitor their request went through when it didn't.
+ * variables. Until both are configured, this route does NOT report
+ * success: it returns a real 503 with an honest message, so the site
+ * never tells a visitor their request went through when it didn't.
+ *
+ * Email content: subject line identifies the form type, requested
+ * service, and lead name ("New Quote Request: Roller Shades — Jane
+ * Doe"). Body includes name, email, phone, city, requested service,
+ * message, source page, submission time, and consent status. Reply-To
+ * is set to the customer's submitted email; the From address is never
+ * the customer's address (see RESEND_FROM_EMAIL below).
  *
  * To activate delivery:
  *   1. Create a Resend account and verify a sending domain (or use their
@@ -23,6 +28,12 @@ import { randomUUID } from "crypto";
  *                                   sender if omitted
  *   3. Redeploy. No code changes are needed — this route picks the
  *      variables up automatically.
+ *
+ * No rate limiting is implemented on this route. If abuse becomes a
+ * problem, the honeypot below catches simple bots, but a determined
+ * abuser could still submit repeatedly; adding real rate limiting would
+ * need an external store (e.g. Upstash Redis) and is a deliberate
+ * follow-up, not something added silently here.
  *
  * See README.md → "Connecting Production Storage" for CRM/database
  * alternatives to email-only delivery.
@@ -49,6 +60,7 @@ const MAX_LENGTHS: Record<string, number> = {
   source: 40,
   sourcePage: 500,
   city: 100,
+  service: 100,
 };
 
 const MAX_PHOTOS = 10;
@@ -71,6 +83,19 @@ function isPlainString(value: unknown): value is string {
   return typeof value === "string";
 }
 
+// Quote form sends `products` (array, e.g. multiple treatments selected).
+// Contact form sends `service` (single optional dropdown value). Either
+// may be absent — this normalizes both into one display label.
+function getRequestedServiceLabel(submission: Record<string, unknown>): string | undefined {
+  if (Array.isArray(submission.products) && submission.products.length > 0) {
+    return submission.products.filter(isPlainString).join(", ");
+  }
+  if (isPlainString(submission.service) && submission.service.trim() !== "") {
+    return submission.service;
+  }
+  return undefined;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -86,7 +111,7 @@ function buildLeadEmailHtml(submission: Record<string, unknown>): string {
     ["Email", submission.email],
     ["Phone", submission.phone],
     ["City / Address", submission.city ?? submission.address],
-    ["Requested service(s)", Array.isArray(submission.products) ? submission.products.join(", ") : undefined],
+    ["Requested service(s)", getRequestedServiceLabel(submission)],
     ["Window quantity", submission.windowQuantity],
     ["Approx. sizes", submission.approxSizes],
     ["Timeline", submission.timeline],
@@ -201,6 +226,8 @@ export async function POST(request: Request) {
 
     try {
       const formLabel = submission.source === "contact-page" ? "Contact Form" : "Quote Request";
+      const serviceLabel = getRequestedServiceLabel(submission) ?? "General Inquiry";
+      const leadName = typeof submission.name === "string" ? submission.name : "Website Visitor";
       const emailRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -211,7 +238,7 @@ export async function POST(request: Request) {
           from: RESEND_FROM_EMAIL,
           to: LEAD_NOTIFICATION_EMAIL,
           reply_to: typeof submission.email === "string" ? submission.email : undefined,
-          subject: `New ${formLabel} — ${typeof submission.name === "string" ? submission.name : "Website Visitor"}`,
+          subject: `New ${formLabel}: ${serviceLabel} — ${leadName}`,
           html: buildLeadEmailHtml(submission),
         }),
       });
