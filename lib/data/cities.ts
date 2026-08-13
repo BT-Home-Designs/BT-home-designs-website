@@ -84,7 +84,7 @@ export const cities: City[] = [
     name: "Frisco",
     county: "Collin / Denton County",
     blurb:
-      "Frisco's newer luxury builds are our highest-volume smart-home installs — full-house motorization synced to Lutron and Control4 systems is now our default recommendation here, not an upgrade.",
+      "Frisco's newer luxury builds are our highest-volume smart-home installs — full-house motorization synced to your existing smart-home system is now our default recommendation here, not an upgrade.",
     neighborhoods: ["Starwood", "Phillips Creek Ranch", "Newman Village", "The Trails"],
     popularServices: ["Motorized Shades", "Plantation Shutters", "Custom Drapery"],
     driveTime: "35 minutes from our showroom",

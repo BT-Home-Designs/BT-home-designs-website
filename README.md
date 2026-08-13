@@ -152,17 +152,15 @@ Same pattern as services: `lib/data/cities.ts` is the single data source, render
 
 - Both forms POST JSON to `app/api/quote/route.ts`.
 - The route validates required fields (name, email, phone), email format, a real-world-shaped phone number, string length limits, and a honeypot field (silently drops likely-bot submissions).
-- On success it **logs the submission to the server console** (redacted to just an ID/timestamp in production, full payload in development) and returns a `201` with a generated submission ID.
-- **Nothing is persisted.** There is no database, no email is sent, and nothing is retrievable after the request completes. On serverless hosts (Vercel included) the filesystem isn't even writable/persistent between invocations, so this is intentionally not a "write to a local file" stopgap either.
+- Both forms require the visitor to check a consent checkbox before submitting ("I agree to be contacted...").
+- The Quote form captures `sourcePage` (the referring page, e.g. a specific service or city page) so leads can be attributed to whatever page generated them.
+- **Delivery is implemented via [Resend](https://resend.com), gated entirely behind environment variables.** If `RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` are both set, a valid submission sends a real email to that inbox with all submitted details (name, contact info, requested service, city, message, source page, timestamp, consent). **If either variable is unset — which is the current state, since no Resend account has been created — the route returns an honest `503` and the form displays that failure to the visitor. It never claims success when nothing was actually delivered.** See `.env.example` for the exact variable names and setup steps.
 - **Photos are not uploaded.** The Quote form's photo step only sends selected file *names* as JSON metadata — no image bytes are transmitted anywhere. The UI tells the user this explicitly ("a team member will follow up separately to collect the actual images"). Client-side validation restricts selections to JPG/PNG/WEBP, 8MB per file, 10 files max, before they're even added to form state.
-
-**In short: submissions are validated and logged only. They are not emailed, stored, or uploaded anywhere permanent.** Do not represent otherwise to users or stakeholders until real storage is wired up.
 
 ## Connecting Production Storage
 
-Before launch, replace the marked block in `app/api/quote/route.ts` with a real integration. A few options, roughly simplest-to-most-capable:
+Resend (email) is wired up and ready — see `.env.example` and the section above. If you'd rather use a database or CRM instead of (or in addition to) email, a few options, roughly simplest-to-most-capable:
 
-- **Resend / SendGrid** — send yourself (and optionally the customer) a transactional email per submission. Fastest to wire up; no database needed. Add the provider's SDK, call it in place of the `console.log`, and keep returning the same JSON shape.
 - **Supabase** — create a `submissions` table matching the request shape, insert via `@supabase/supabase-js` using a server-side service-role key (never exposed to the client).
 - **Airtable** — insert a record via the Airtable REST API using a personal access token; good fit if the business already manages leads in an Airtable base.
 - **HubSpot** — create/update a contact and a deal via the HubSpot CRM API; a good fit if the business already uses HubSpot for sales pipeline.
@@ -174,25 +172,24 @@ To accept real photo uploads later: use Next's native `Request.formData()` (no e
 
 ## Environment Variables
 
-None are required to build or run the site today — it has no external service configured. When you connect one of the integrations above, you'll typically add variables such as:
+See `.env.example` for the full list with descriptions. Summary:
 
 ```bash
-# Example only — add the ones your chosen integration actually needs
-RESEND_API_KEY=
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-HUBSPOT_ACCESS_TOKEN=
-JOBNIMBUS_API_KEY=
+RESEND_API_KEY=                 # required for lead delivery to work at all
+LEAD_NOTIFICATION_EMAIL=        # required — the inbox that receives leads
+RESEND_FROM_EMAIL=              # optional, defaults to a Resend test sender
+NEXT_PUBLIC_GA_MEASUREMENT_ID=  # optional — Google Analytics 4, "G-XXXXXXXXXX"
+NEXT_PUBLIC_GSC_VERIFICATION=   # optional — Google Search Console ownership token
 ```
 
-Never commit real secrets. Add a `.env.example` listing variable names (no values) once you've picked an integration, and keep `.env.local` out of version control (already covered by the default Next.js `.gitignore`).
+None of these are set anywhere in this repository or its deployment config — no account has been created and no value has been invented. Every one of them is safe to leave unset: the site builds and runs normally, lead delivery just honestly reports itself unavailable until `RESEND_API_KEY`/`LEAD_NOTIFICATION_EMAIL` are set, and analytics simply doesn't load until its variable is set. Never commit real secrets — `.env.example` is intentionally tracked (values blank) so the required names are documented, while `.env.local` and any other real `.env*` file stay out of version control.
 
 ## Deploying to Vercel
 
 1. Push this repository to GitHub/GitLab/Bitbucket.
 2. In Vercel, "Add New Project" -> import the repository.
 3. Framework preset: Next.js (auto-detected). No build command changes needed — Vercel runs `next build` automatically.
-4. Add any environment variables from the section above under Project Settings -> Environment Variables (skip this until a storage integration is added — none are required today).
+4. Add the environment variables from the section above under Project Settings -> Environment Variables. At minimum, set `RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` before launch so the forms actually deliver leads.
 5. Deploy. Vercel's default output handling (static pages served from the edge, the one dynamic API route served as a serverless/edge function) requires no extra configuration for this project.
 6. Under Project Settings -> Domains, add the production domain and update `siteUrl` references — currently `https://www.bthomedesigns.com` in `lib/data/business.ts` (`urls.website`) and used throughout `app/layout.tsx` and `app/sitemap.ts` — to match.
 
@@ -230,13 +227,15 @@ The brief calls out six future features. None are built yet; notes below are for
 
 ## Known Placeholders
 
-Everything below needs real information before launch. All of it lives in `lib/data/business.ts` unless noted.
+Everything below needs real information or a real account/credential before launch. Business-data fields live in `lib/data/business.ts` unless noted.
 
 | Field | Current value | Location |
 |---|---|---|
-| Phone | `(972) 555-0123` | `business.ts` -> `contact.phone` / `phoneDisplay` |
-| Email | `hello@bthomedesigns.com` | `business.ts` -> `contact.email` |
-| Street address | `"Update in lib/data/business.ts"` | `business.ts` -> `address.street` |
+| Lead delivery | **Not configured** — forms honestly report unavailable until set | `RESEND_API_KEY` / `LEAD_NOTIFICATION_EMAIL` env vars, see `.env.example` |
+| Phone | `(972) 555-0123`, hidden from the live site (`phoneVerified: false`) | `business.ts` -> `contact.phone` / `phoneDisplay` |
+| Email | `hello@bthomedesigns.com`, hidden from the live site (`emailVerified: false`) | `business.ts` -> `contact.email` |
+| Street address | `"Update in lib/data/business.ts"`, hidden from the live site (`address.isVerified: false`) | `business.ts` -> `address.street` |
+| Business hours | Empty, hidden from the live site (`hoursVerified: false`) | `business.ts` -> `hours` |
 | Postal code | Empty (omitted from schema) | `business.ts` -> `address.postalCode` |
 | Instagram URL | Empty (link hidden until set) | `business.ts` -> `social.instagram` |
 | Facebook URL | Empty (link hidden until set) | `business.ts` -> `social.facebook` |
@@ -246,6 +245,10 @@ Everything below needs real information before launch. All of it lives in `lib/d
 | Review count / average rating | `null` (not displayed or emitted in schema) | `business.ts` -> `reviews` |
 | Warranty language | `null` (not displayed anywhere) | `business.ts` -> `warranty` |
 | Legal entity name | `"BT Home Designs LLC"` (unconfirmed) | `business.ts` -> `legalName` |
-| Testimonials | Six illustrative example quotes, not real client reviews | `lib/data/testimonials.ts` (file header documents this) |
-| All photography | CSS placeholders throughout | see "Replacing Images" |
+| Testimonials | Empty — `Testimonials` component renders nothing until real, permissioned reviews are added | `lib/data/reviews.ts` (file header documents this) |
+| Homepage hero / About photos | Real licensed Unsplash stock photography (approved), not BT Home Designs project photos | `lib/data/media.ts` |
+| Service page hero photos | 7 AI-generated design images (approved), clearly documented as not real installations | `lib/data/media.ts` -> `serviceHeroImages` |
+| Gallery page | Style/inspiration guide by design — no photos claimed as BT Home Designs' own work | `app/gallery/page.tsx` |
+| Legal pages | Published as general policies; **not attorney-reviewed** | `app/privacy-policy`, `app/terms-of-use`, `app/accessibility-statement` |
+| Google Analytics / Search Console | Not connected — see `.env.example` | `NEXT_PUBLIC_GA_MEASUREMENT_ID` / `NEXT_PUBLIC_GSC_VERIFICATION` |
 | Fraunces/Manrope font files | Not bundled; system font fallback in use | see "Typography" |

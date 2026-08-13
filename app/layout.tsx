@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FloatingCTA } from "@/components/FloatingCTA";
 import { LocalBusinessSchema } from "@/components/LocalBusinessSchema";
+import { Analytics } from "@/components/Analytics";
 import { business } from "@/lib/data/business";
 
 // Typography: system font stack, no next/font/google or any external font
@@ -46,6 +47,11 @@ export const metadata: Metadata = {
   },
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
+  // Google Search Console site verification — only emits the meta tag
+  // when NEXT_PUBLIC_GSC_VERIFICATION is set. No token is invented here.
+  ...(process.env.NEXT_PUBLIC_GSC_VERIFICATION
+    ? { verification: { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION } }
+    : {}),
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -53,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="antialiased">
         <LocalBusinessSchema />
+        <Analytics />
         <Navbar />
         <main>{children}</main>
         <Footer />

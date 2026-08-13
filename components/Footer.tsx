@@ -125,6 +125,11 @@ export function Footer() {
             <Link href="/contact" className="hover:text-warm-white/70">Contact</Link>
           </div>
         </div>
+        <div className="container-lux flex flex-wrap justify-center gap-5 pb-6 text-[10px] text-warm-white/30 md:justify-start">
+          <Link href="/privacy-policy" className="hover:text-warm-white/60">Privacy Policy</Link>
+          <Link href="/terms-of-use" className="hover:text-warm-white/60">Terms of Use</Link>
+          <Link href="/accessibility-statement" className="hover:text-warm-white/60">Accessibility Statement</Link>
+        </div>
       </div>
     </footer>
   );

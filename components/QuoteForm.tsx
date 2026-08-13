@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, Upload, X } from "lucide-react";
 import { services } from "@/lib/data/services";
 import { business } from "@/lib/data/business";
+import { trackLead } from "@/lib/analytics";
 import { Button } from "./Button";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,8 @@ type FormState = {
   consultationDate: string;
   consultationTime: string;
   photos: File[];
+  /** Required consent to be contacted about this request. */
+  consent: boolean;
   /** Honeypot — must stay empty. Hidden from real visitors via CSS. */
   website: string;
 };
@@ -38,6 +41,7 @@ const initialState: FormState = {
   consultationDate: "",
   consultationTime: "",
   photos: [],
+  consent: false,
   website: "",
 };
 
@@ -57,6 +61,12 @@ export function QuoteForm() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  // Which page the visitor was on immediately before landing on /quote —
+  // lets leads be attributed to the service or city page that generated
+  // them (e.g. a "Get Free Consultation" click from /services/roller-shades).
+  // Never rendered in the DOM, so there's no hydration-mismatch risk from
+  // reading it during the client's initial render.
+  const [sourcePage] = useState(() => (typeof document !== "undefined" ? document.referrer || "direct" : "direct"));
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -110,7 +120,7 @@ export function QuoteForm() {
   };
 
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || !form.consent) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -120,6 +130,7 @@ export function QuoteForm() {
         body: JSON.stringify({
           ...form,
           photos: form.photos.map((f) => f.name),
+          sourcePage,
         }),
       });
       if (!res.ok) {
@@ -127,11 +138,14 @@ export function QuoteForm() {
         throw new Error(body?.error ?? "Submission failed");
       }
       setSubmitted(true);
-    } catch {
+      trackLead("quote");
+    } catch (err) {
+      const apiMessage = err instanceof Error && err.message && err.message !== "Submission failed" ? err.message : null;
       setError(
-        business.contact.phoneVerified
-          ? `Something went wrong sending your request. Please call us at ${business.contact.phoneDisplay} and we'll get you scheduled directly.`
-          : "Something went wrong sending your request. Please try again, or reach us through the contact page."
+        apiMessage ??
+          (business.contact.phoneVerified
+            ? `Something went wrong sending your request. Please call us at ${business.contact.phoneDisplay} and we'll get you scheduled directly.`
+            : "Something went wrong sending your request. Please try again, or reach us through the contact page.")
       );
     } finally {
       setSubmitting(false);
@@ -357,6 +371,19 @@ export function QuoteForm() {
                   </div>
                 ))}
               </dl>
+              <label className="flex items-start gap-3 text-[13px] text-charcoal-soft">
+                <input
+                  type="checkbox"
+                  checked={form.consent}
+                  onChange={(e) => update("consent", e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-oak-dark"
+                  required
+                />
+                <span>
+                  I agree to be contacted by BT Home Designs by phone, text, or email about this request. We
+                  won&apos;t share your information with third parties for marketing purposes.
+                </span>
+              </label>
               {error && <p role="alert" aria-live="assertive" className="text-[13px] text-red-700">{error}</p>}
             </div>
           )}
@@ -375,7 +402,7 @@ export function QuoteForm() {
             Continue
           </Button>
         ) : (
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button onClick={handleSubmit} disabled={submitting || !form.consent}>
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending

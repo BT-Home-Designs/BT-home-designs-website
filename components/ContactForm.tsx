@@ -4,35 +4,43 @@ import { useId, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "./Button";
 import { business } from "@/lib/data/business";
+import { trackLead } from "@/lib/analytics";
 
 export function ContactForm() {
-  const [form, setForm] = useState({ name: "", phone: "", email: "", message: "", website: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", message: "", consent: false, website: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
+  // Which page the visitor was on immediately before landing on Contact —
+  // never rendered, so there's no hydration-mismatch risk from reading it
+  // during the client's initial render.
+  const [sourcePage] = useState(() => (typeof document !== "undefined" ? document.referrer || "direct" : "direct"));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
+    if (submitting || !form.consent) return;
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, source: "contact-page" }),
+        body: JSON.stringify({ ...form, source: "contact-page", sourcePage }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Submission failed");
       }
       setSubmitted(true);
-    } catch {
+      trackLead("contact");
+    } catch (err) {
+      const apiMessage = err instanceof Error && err.message && err.message !== "Submission failed" ? err.message : null;
       setError(
-        business.contact.phoneVerified
-          ? `Something went wrong sending your message. Please call us at ${business.contact.phoneDisplay}.`
-          : "Something went wrong sending your message. Please try again in a moment."
+        apiMessage ??
+          (business.contact.phoneVerified
+            ? `Something went wrong sending your message. Please call us at ${business.contact.phoneDisplay}.`
+            : "Something went wrong sending your message. Please try again in a moment.")
       );
     } finally {
       setSubmitting(false);
@@ -94,20 +102,33 @@ export function ContactForm() {
           />
         </div>
       </div>
-      <div>
-        <label htmlFor="contact-email" className="sr-only">Email</label>
-        <input
-          id="contact-email"
-          required
-          type="email"
-          placeholder="Email"
-          autoComplete="email"
-          aria-describedby={error ? errorId : undefined}
-          aria-invalid={error ? true : undefined}
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className={inputClass}
-        />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label htmlFor="contact-email" className="sr-only">Email</label>
+          <input
+            id="contact-email"
+            required
+            type="email"
+            placeholder="Email"
+            autoComplete="email"
+            aria-describedby={error ? errorId : undefined}
+            aria-invalid={error ? true : undefined}
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor="contact-city" className="sr-only">City</label>
+          <input
+            id="contact-city"
+            placeholder="City (optional)"
+            autoComplete="address-level2"
+            value={form.city}
+            onChange={(e) => setForm({ ...form, city: e.target.value })}
+            className={inputClass}
+          />
+        </div>
       </div>
       <div>
         <label htmlFor="contact-message" className="sr-only">Tell us about your project</label>
@@ -121,12 +142,25 @@ export function ContactForm() {
           className={inputClass}
         />
       </div>
+      <label className="flex items-start gap-3 text-[13px] text-charcoal-soft">
+        <input
+          type="checkbox"
+          checked={form.consent}
+          onChange={(e) => setForm({ ...form, consent: e.target.checked })}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-oak-dark"
+          required
+        />
+        <span>
+          I agree to be contacted by BT Home Designs by phone, text, or email about my message. We won&apos;t
+          share your information with third parties for marketing purposes.
+        </span>
+      </label>
       {error && (
         <p id={errorId} role="alert" aria-live="assertive" className="text-[13px] text-red-700">
           {error}
         </p>
       )}
-      <Button type="submit" disabled={submitting} className="w-full justify-center sm:w-auto">
+      <Button type="submit" disabled={submitting || !form.consent} className="w-full justify-center sm:w-auto">
         {submitting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending
