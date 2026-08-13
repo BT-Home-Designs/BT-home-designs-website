@@ -27,7 +27,7 @@ export const services: Service[] = [
     heroCopy:
       "Solid hardwood and composite shutters, hand-fitted to every window in your Texas home — the closest thing to permanent architecture a window treatment can be.",
     description:
-      "Plantation shutters are the most requested treatment in North Texas for a reason: they hold their shape through decades of heat, add real resale value, and control light with a single tilt of the louver. We build every panel to the exact opening — no fillers, no gaps — using kiln-dried basswood or weather-stable composite for sun rooms and bathrooms.",
+      "Plantation shutters are the most requested treatment in North Texas for a reason: they hold their shape through decades of heat, add real resale value, and control light with a single tilt of the louver. We build every panel to the exact opening — no fillers, no gaps — using hardwood or weather-stable composite depending on the room.",
     benefits: [
       { title: "Built for Texas heat", copy: "Composite and hybrid frames resist warping through triple-digit summers and hold their finish for decades." },
       { title: "Exact-fit engineering", copy: "Every panel is measured and hung to your opening — true divided louvers, hidden tilt rods, flush reveals." },
@@ -36,14 +36,14 @@ export const services: Service[] = [
     ],
     faqs: [
       { q: "Wood or composite — which is right for my home?", a: "We recommend hardwood for living areas and bedrooms for the richest grain and lightest weight, and composite for kitchens, bathrooms, and sunrooms where humidity and direct sun are constant." },
-      { q: "How long does installation take?", a: "Most homes are measured in one visit and installed in a single day, four to six weeks after your order is placed with our millwork partners." },
+      { q: "How long does installation take?", a: "Most homes are measured in one visit and installed in a single day, several weeks after your order is placed — your designer will confirm a specific timeline." },
       { q: "Can shutters be fitted to bay or arched windows?", a: "Yes. Arches, angles, bays, and French doors are all part of our standard measuring process — we template unusual openings by hand." },
       { q: "Do shutters help with energy bills?", a: "Closed hardwood or composite louvers add a meaningful insulating layer against both summer heat gain and winter draft, which DFW homeowners notice most in west-facing rooms." },
     ],
     visual: "louver",
     designOptions: [
-      { label: "Materials", value: "Kiln-dried hardwood or weather-stable composite" },
-      { label: "Louver Size", value: "2.5in, 3.5in, or 4.5in — sized to your window's proportions" },
+      { label: "Materials", value: "Hardwood or weather-stable composite, depending on the room" },
+      { label: "Louver Size", value: "A range of common sizes — your designer will confirm current options" },
       { label: "Light Control", value: "Full tilt range, from closed privacy to soft diffused daylight" },
       { label: "Privacy", value: "Complete — no gaps at the frame, hidden tilt rods" },
       { label: "Insulation", value: "Adds a real thermal layer against summer heat and winter draft" },
@@ -70,7 +70,7 @@ export const services: Service[] = [
       { q: "What's the difference between solar and blackout fabric?", a: "Solar screens filter UV and glare while preserving your view outward — ideal for west-facing DFW rooms. Blackout fabric fully blocks light for bedrooms and media rooms." },
       { q: "Can I mix light-filtering and blackout in the same window?", a: "Yes — our dual roller system pairs a sheer or solar fabric with a blackout fabric on one headrail, controlled independently or together." },
       { q: "Are roller shades motorized?", a: "We offer manual, cordless spring-assist, and fully motorized options with app or voice control on the same fabric lineup." },
-      { q: "How wide can a single roller shade span?", a: "Standard fabrication covers openings up to roughly 12 feet wide as one continuous shade, with reinforced tubes for larger glass walls." },
+      { q: "How wide can a single roller shade span?", a: "Many single roller shades can cover very wide openings as one continuous shade — your measure technician will confirm what's achievable for your window, with reinforced tubes available for larger glass walls, depending on the manufacturer." },
     ],
     visual: "roller",
     designOptions: [
@@ -93,22 +93,22 @@ export const services: Service[] = [
     description:
       "Motorized shades pair any of our fabric, cellular, or woven wood systems with a quiet in-tube motor, controlled by remote, wall keypad, app, or your existing smart home system. We design the low-voltage wiring and hub placement during the same in-home consultation as your fabric selection, so the finished install looks and feels custom-built.",
     benefits: [
-      { title: "Works with your smart home", copy: "Integrates with Lutron, Control4, Apple Home, Amazon Alexa, and Google Home for scheduled or voice-triggered scenes." },
+      { title: "Works with your smart home", copy: "Integrates with many popular smart-home systems for scheduled or voice-triggered scenes, depending on the motor and hub you choose." },
       { title: "Rechargeable or hardwired", copy: "Battery, solar-charged, and hardwired motor options fit new construction and retrofit projects alike." },
       { title: "Whisper-quiet motors", copy: "In-tube motors run near-silently, so scheduled movements don't interrupt a nursery, home office, or bedroom." },
       { title: "Scenes, not single shades", copy: "Group shades by room or exposure — one tap lowers every west-facing shade in the house at once." },
     ],
     faqs: [
       { q: "Do I need an electrician for motorized shades?", a: "Most installs run on rechargeable lithium battery packs and need no new wiring; hardwired or solar-charged options are available and we coordinate any electrical work." },
-      { q: "Which smart home systems are compatible?", a: "Our motorized line integrates with Lutron Caséta, Control4, Apple HomeKit, Amazon Alexa, and Google Home out of the box." },
-      { q: "How long does the battery last?", a: "Typical use averages 12–18 months per charge, with a simple USB-C recharge cycle and no need to remove the shade." },
+      { q: "Which smart home systems are compatible?", a: "Compatibility depends on the specific motor and hub you choose — your designer will confirm what integrates with your existing or planned smart-home system." },
+      { q: "How long does the battery last?", a: "Battery life varies by usage, shade size, and motor — your designer can give you a more specific estimate based on the system you choose." },
       { q: "Can existing shades be retrofitted with motors?", a: "In many cases yes — we evaluate your current hardware during the consultation and recommend retrofit versus replacement." },
     ],
     visual: "roller",
     designOptions: [
       { label: "Materials", value: "Any fabric, cellular, or woven wood system in our lineup" },
       { label: "Power", value: "Rechargeable battery, solar-charged, or hardwired" },
-      { label: "Smart Home", value: "Lutron, Control4, Apple Home, Alexa, Google Home" },
+      { label: "Smart Home", value: "Depends on the motor and hub you choose" },
       { label: "Motorization", value: "Whisper-quiet in-tube motors, grouped by room or scene" },
       { label: "Style", value: "Same fabric and headrail options as our manual lines" },
       { label: "Best For", value: "Whole-home automation, hard-to-reach windows, nurseries" },
@@ -198,7 +198,7 @@ export const services: Service[] = [
       { q: "What pleat styles are available?", a: "Pinch pleat, goblet, ripple fold, and tab top are our most-requested styles, each shown on fabric samples during your in-home consultation." },
       { q: "Can drapery be paired with my existing shutters or shades?", a: "Yes — drapery layered over shutters or roller shades is one of our most common requests, adding softness and framing without losing function." },
       { q: "Is motorized drapery available?", a: "Yes, on a quiet traverse track with app and voice control, most often specified for primary bedrooms and great rooms." },
-      { q: "How long does custom drapery take to fabricate?", a: "Typically five to seven weeks from final measure to installation, depending on fabric and hardware lead times." },
+      { q: "How long does custom drapery take to fabricate?", a: "Timelines vary by fabric and hardware lead times — your consultant will provide a specific estimate once your order details are finalized." },
     ],
     visual: "drape",
     designOptions: [

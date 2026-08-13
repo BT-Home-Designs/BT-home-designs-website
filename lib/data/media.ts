@@ -62,24 +62,47 @@ export const homeMedia = {
 };
 
 /**
- * Service-page hero images. Every slot defaults to `src: undefined`
- * (renders no image — the existing WindowArt line-art treatment carries
- * the page instead) until a specific, verified stock photo — or real BT
- * Home Designs photography — is confirmed for that product. This file
- * intentionally ships with only 2 of 9 total slots populated this round:
- * matching a specific licensed stock photo to each of the 7 individual
- * product categories (motorized shades, zebra shades, woven woods, etc.)
- * needs someone who can actually see the candidate photos to confirm they
- * clearly show the right product and match the palette — pick photos here
- * once you've reviewed and chosen them, or ask for another pass once the
- * hero/about choices above are confirmed.
+ * Service-page hero images.
+ *
+ * These 7 images are AI-generated design imagery (created for BT Home
+ * Designs and reviewed/approved for site use) — NOT photographs of real
+ * BT Home Designs installations, customer homes, or completed projects.
+ * They illustrate what each product category looks like in a room, in the
+ * site's neutral/warm-oak palette, until real project photography exists.
+ * Do not caption or describe these as "our work," "recent installs," or
+ * any variation implying they depict an actual BT Home Designs job.
+ *
+ * To replace one with a real installation photo later: drop the file into
+ * public/images/services/, point `src` at it, and update `alt` — no other
+ * code changes needed.
  */
-export const serviceMedia: Record<string, MediaSlot> = {
-  "plantation-shutters": { src: undefined, alt: "" },
-  "roller-shades": { src: undefined, alt: "" },
-  "motorized-shades": { src: undefined, alt: "" },
-  "zebra-shades": { src: undefined, alt: "" },
-  "woven-woods": { src: undefined, alt: "" },
-  "custom-drapery": { src: undefined, alt: "" },
-  "exterior-shades": { src: undefined, alt: "" },
+export const serviceHeroImages: Record<string, MediaSlot> = {
+  "plantation-shutters": {
+    src: "/images/services/plantation-shutters.jpg",
+    alt: "Wide living room with white plantation shutters across two large windows, beamed ceiling, and neutral seating",
+  },
+  "roller-shades": {
+    src: "/images/services/roller-shades.jpg",
+    alt: "Wide dining room with four light-filtering roller shades over floor-to-ceiling windows",
+  },
+  "motorized-shades": {
+    src: "/images/services/motorized-shades.jpg",
+    alt: "Wide modern living room with three large roller shades lowered over floor-to-ceiling glass",
+  },
+  "zebra-shades": {
+    src: "/images/services/zebra-shades.jpg",
+    alt: "Wide home office with two banded zebra shades filtering light over a desk and built-in shelving",
+  },
+  "woven-woods": {
+    src: "/images/services/woven-woods.jpg",
+    alt: "Wide breakfast nook with three woven wood roman shades over a bay window and round dining table",
+  },
+  "custom-drapery": {
+    src: "/images/services/custom-drapery.jpg",
+    alt: "Wide living room with full-length linen drapery framing a tall window beside a stone fireplace",
+  },
+  "exterior-shades": {
+    src: "/images/services/exterior-shades.jpg",
+    alt: "Wide covered patio with dark exterior solar shades lowered beside a pool",
+  },
 };
