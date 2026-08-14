@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight, Award, Hammer, Heart, Home as HomeIcon, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/Button";
 import { SectionHeading } from "@/components/SectionHeading";
 import { FadeIn } from "@/components/FadeIn";
-import { WindowArt } from "@/components/WindowArt";
 import { SceneImage } from "@/components/SceneImage";
 import { Testimonials } from "@/components/Testimonials";
 import { services } from "@/lib/data/services";
 import { cities } from "@/lib/data/cities";
 import { business } from "@/lib/data/business";
-import { homeMedia } from "@/lib/data/media";
+import { homeMedia, shopByStyleImages } from "@/lib/data/media";
 
 export const metadata: Metadata = {
   title: "Custom Window Treatments Dallas–Fort Worth | BT Home Designs",
@@ -88,20 +88,43 @@ export default function HomePage() {
       <section className="bg-cream py-20 lg:py-28">
         <div className="container-lux">
           <SectionHeading eyebrow="Shop by Style" title="Custom Solutions for Every Window" align="center" className="mx-auto" />
-          <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
-            {services.map((s, i) => (
-              <FadeIn key={s.slug} delay={(i % 7) * 0.05}>
-                <Link
-                  href={`/services/${s.slug}`}
-                  className="group flex h-full flex-col items-center rounded-sm border border-charcoal/10 bg-warm-white p-5 text-center transition-colors hover:border-oak-dark"
-                >
-                  <WindowArt variant={s.visual} tone="light" className="h-16 w-16 rounded-full" />
-                  <p className="mt-4 text-[13px] font-semibold uppercase tracking-wide text-charcoal">{s.name}</p>
-                  <p className="mt-2 flex-1 text-[12px] leading-relaxed text-charcoal-soft">{s.shortTagline}</p>
-                  <ArrowUpRight className="mt-4 h-4 w-4 text-oak-dark transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
-                </Link>
-              </FadeIn>
-            ))}
+          <div className="mt-14 grid grid-cols-2 gap-5 lg:grid-cols-4">
+            {services.map((s, i) => {
+              const media = shopByStyleImages[s.slug];
+              return (
+                <FadeIn key={s.slug} delay={(i % 4) * 0.06}>
+                  <Link href={`/services/${s.slug}`} className="group block">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-warm-white">
+                      {media?.src ? (
+                        <Image
+                          src={media.src}
+                          alt={media.alt}
+                          fill
+                          sizes="(min-width: 1024px) 25vw, 50vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        />
+                      ) : (
+                        // Restrained neutral fallback — no giant abstract
+                        // illustration, no placeholder box that implies a
+                        // broken image. Just typography, until a verified
+                        // photo exists for this category.
+                        <div className="flex h-full w-full flex-col items-center justify-center border border-charcoal/10 bg-cream-deep/40 px-4 text-center">
+                          <span className="h-px w-8 bg-oak" aria-hidden="true" />
+                          <p className="mt-3 font-display text-base text-charcoal-soft">{s.shortName}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-start justify-between gap-2 border-b border-charcoal/10 pb-3">
+                      <div>
+                        <p className="text-[13px] font-semibold uppercase tracking-wide text-charcoal">{s.name}</p>
+                        <p className="mt-1 text-[12px] leading-relaxed text-charcoal-soft">{s.shortTagline}</p>
+                      </div>
+                      <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-oak-dark transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+                    </div>
+                  </Link>
+                </FadeIn>
+              );
+            })}
           </div>
         </div>
       </section>

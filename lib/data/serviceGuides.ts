@@ -430,6 +430,83 @@ export const serviceGuides: Record<string, ServiceGuide> = {
     ],
   },
 
+  "roman-shades": {
+    intro: [
+      "Roman shades are a single panel of fabric that stacks into neat horizontal folds as it's raised, rather than rolling around a tube or gathering loosely. The result reads as more tailored and residential than a roller shade — closer to soft furnishing than hardware — while staying simpler to operate than full-length drapery.",
+      "Because the whole shade is fabric, Roman shades bring warmth and texture to a window in a way a hard-surface shade can't, while still folding away compactly when raised.",
+    ],
+    lightControlPrivacy: [
+      "Light control and privacy depend on the face fabric and any liner added behind it. Light-filtering fabrics soften daylight while keeping the room bright; a privacy or blackout liner can be added behind almost any face fabric for bedrooms or media rooms without changing how the shade looks from the room.",
+      "Because the fabric is a single panel rather than woven bands or slats, a closed Roman shade generally reads as more solidly private than a sheer or woven-wood treatment, though exact coverage depends on the fabric's weight and any liner chosen.",
+    ],
+    optionGroups: [
+      {
+        title: "Fold Styles",
+        intro: "Available options may include:",
+        items: [
+          { name: "Flat fold", description: "Lies smooth and flat when lowered, with folds appearing only as the shade is raised — a clean, tailored look." },
+          { name: "Relaxed fold", description: "A soft, gentle curve along the bottom edge even when lowered, for a more casual feel." },
+          { name: "Structured fold", description: "Crisp, defined horizontal folds held in place by an internal support, visible even when the shade is fully raised." },
+        ],
+      },
+      {
+        title: "Liners",
+        items: [
+          { name: "Privacy liner", description: "Adds opacity behind the face fabric without changing its color or texture from the room side." },
+          { name: "Blackout liner", description: "Blocks most light, commonly chosen for bedrooms and media rooms." },
+          { name: "No liner", description: "Lets the face fabric's natural light-filtering character come through, for rooms where full privacy isn't the priority." },
+        ],
+      },
+      {
+        title: "Mount & Operation",
+        items: [
+          { name: "Inside mount", description: "Fits within the window frame for a built-in look." },
+          { name: "Outside mount", description: "Mounts on the surrounding wall or trim, useful for shallow windows or to make an opening look larger." },
+          { name: "Cordless lift", description: "Standard safety-focused operation on most of our Roman shade lines." },
+          { name: "Motorized", description: "Available on many product lines — see the motorized shades page for control and power options." },
+        ],
+      },
+    ],
+    materials: {
+      title: "Fabric Selection",
+      intro: "Available in a wide range of fiber types, weights, colors, and patterns. Available options may include:",
+      items: [
+        { name: "Natural fibers", description: "Linen and cotton-blend fabrics with a relaxed, textural look." },
+        { name: "Light-filtering weaves", description: "Softens daylight while keeping the room bright." },
+        { name: "Performance fabrics", description: "Woven to better resist fading, often considered for sun-exposed windows." },
+      ],
+    },
+    howToChoose: [
+      "Do you want a tailored flat fold, a soft relaxed curve, or crisp structured folds?",
+      "Is this shade the primary light control for the room, or will it be layered with drapery?",
+      "Does the room need a blackout or privacy liner, or is light-filtering fabric enough?",
+      "What's the room's overall palette and formality — does a natural fiber or a more refined weave fit better?",
+      "Do you want cordless or motorized operation?",
+    ],
+    roomSuitability: [
+      { room: "Bedrooms", note: "A common choice, often paired with a blackout liner." },
+      { room: "Dining rooms", note: "The tailored, soft look suits a more formal dining setting." },
+      { room: "Living rooms", note: "Works well alone or layered under drapery for a fuller window treatment." },
+      { room: "Kitchens", note: "Flat-fold styles in performance fabric are practical for cooking areas with good natural light." },
+      { room: "Home offices", note: "Light-filtering fabric helps manage screen glare while keeping the room bright." },
+    ],
+    care: [
+      "Dust regularly with a soft brush attachment or vacuum on a low setting.",
+      "Spot-clean with a lightly damp cloth, avoiding saturation of the fabric.",
+      "Keep the lift mechanism free of dust so folds stack evenly.",
+      "Follow the specific fabric's care instructions for any deeper cleaning.",
+    ],
+    faqs: [
+      { q: "What's the difference between flat, relaxed, and structured folds?", a: "Flat Roman shades lie smooth when lowered for a tailored look; relaxed styles have a soft curve at the bottom edge; structured styles hold crisp, defined folds even when raised. Your designer can show samples of each in your room." },
+      { q: "Can Roman shades provide blackout?", a: "Yes — a blackout liner can be added behind most face fabrics for bedrooms and media rooms, without changing how the fabric looks from the room." },
+      { q: "Are Roman shades safe for kids and pets?", a: "Cordless operation is standard on most of our Roman shade lines, which is generally considered safer than corded systems." },
+      { q: "Can Roman shades be motorized?", a: "Yes, on many product lines, using the same in-tube motors as our roller and zebra shade lines." },
+      { q: "How is a Roman shade different from a roller shade?", a: "A roller shade is a flat fabric plane that rolls around a tube. A Roman shade is a single panel that folds into neat horizontal pleats as it's raised, giving it a softer, more tailored look." },
+      { q: "Can Roman shades be layered with drapery?", a: "Yes — pairing a Roman shade with drapery panels is a common way to get both function and a fuller, more finished window." },
+      { q: "How are Roman shades cleaned?", a: "Regular dusting and occasional spot-cleaning with a lightly damp cloth is typically sufficient — see the care section above for more detail." },
+    ],
+  },
+
   "woven-woods": {
     intro: [
       "Woven wood shades are handwoven from natural materials — bamboo, jute, rattan, and grasses — bringing warmth and texture to a room that fabric alone doesn't replicate. They're a popular choice for coastal, organic, and transitional interiors.",

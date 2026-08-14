@@ -49,16 +49,64 @@ export const homeMedia = {
     license: "Unsplash License — free for commercial use, no attribution required",
   } as MediaSlot,
 
-  // TEMPORARY STOCK — REPLACE WITH BT HOME DESIGNS PROJECT PHOTO
-  // Warm, sunlit architectural detail shot of a window with venetian-style
-  // blinds — chosen for the About section as a complementary architectural
-  // window-treatment image alongside the hero.
+  // Dedicated photo supplied directly by the site owner for the About
+  // section — a corner living room with two sets of plantation shutters,
+  // bright and neutral, full room context. Distinct from the Shop By
+  // Style Plantation Shutters card image (previously this section reused
+  // that same file; that duplication is now resolved).
   about: {
-    src: "https://images.unsplash.com/photo-1602613100439-193a1ab4f5e0?auto=format&fit=crop&w=1400&q=80",
-    alt: "Warm sunlight filtering through window blinds onto a neutral interior wall",
-    stockSource: "https://unsplash.com/photos/white-window-blinds-on-white-wall-NzTfWq_thaA",
-    license: "Unsplash License — free for commercial use, no attribution required",
+    src: "/images/home/about.jpg",
+    alt: "Bright corner living room with two sets of white plantation shutters, neutral sofa, and a potted fiddle-leaf fig",
   } as MediaSlot,
+};
+
+/**
+ * Homepage "Shop by Style" product-card images.
+ *
+ * Reuses the same 7 approved AI-generated images as the service-page
+ * heroes (see serviceHeroImages below) for visual consistency between
+ * the homepage grid and each service's own page — same source file,
+ * cropped differently per placement via CSS, not a separate asset.
+ *
+ * "roman-shades" uses a real photo (public/images/services/roman-shades.jpg)
+ * supplied directly by the site owner — a woven-texture Roman shade with
+ * clearly visible horizontal fabric folds, installed in a real window
+ * with room context. Not stock; approved specifically for this card. No
+ * stockSource/license fields since it isn't a licensed stock photo.
+ */
+export const shopByStyleImages: Record<string, MediaSlot> = {
+  "plantation-shutters": {
+    src: "/images/services/plantation-shutters.jpg",
+    alt: "Plantation shutters with visible louvers in a bright living room",
+  },
+  "roller-shades": {
+    src: "/images/services/roller-shades.jpg",
+    alt: "Light-filtering roller shades over a row of dining room windows",
+  },
+  "motorized-shades": {
+    src: "/images/services/motorized-shades.jpg",
+    alt: "Motorized roller shades lowered over floor-to-ceiling glass in a modern living room",
+  },
+  "roman-shades": {
+    src: "/images/services/roman-shades.jpg",
+    alt: "Woven-texture Roman shade with visible horizontal fabric folds in a living room window",
+  },
+  "zebra-shades": {
+    src: "/images/services/zebra-shades.jpg",
+    alt: "Zebra shades showing alternating sheer and opaque bands in a home office",
+  },
+  "woven-woods": {
+    src: "/images/services/woven-woods.jpg",
+    alt: "Natural woven wood shades over a bay window in a breakfast nook",
+  },
+  "custom-drapery": {
+    src: "/images/services/custom-drapery.jpg",
+    alt: "Full-length linen drapery framing a tall window beside a stone fireplace",
+  },
+  "exterior-shades": {
+    src: "/images/services/exterior-shades.jpg",
+    alt: "Dark exterior solar shades on a covered patio beside a pool",
+  },
 };
 
 /**

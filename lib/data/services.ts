@@ -147,6 +147,38 @@ export const services: Service[] = [
     ],
   },
   {
+    slug: "roman-shades",
+    name: "Roman Shades",
+    shortName: "Roman Shades",
+    tagline: "Soft, tailored fabric folds that dress a window like furniture",
+    shortTagline: "Tailored softness. Timeless fold.",
+    heroCopy:
+      "A single panel of fabric that rises into soft, structured folds — Roman shades bring the warmth of drapery and the clean function of a shade to one treatment.",
+    description:
+      "Roman shades are fabric window coverings that stack into neat horizontal folds as they're raised, rather than rolling or gathering. Available in flat, relaxed, and structured fold styles, they read as more tailored and residential than a roller shade while staying simpler than full drapery — a favorite for bedrooms, dining rooms, and any room that wants softness without heavy fabric.",
+    benefits: [
+      { title: "Soft, tailored look", copy: "Structured folds bring the warmth of fabric to a window without the fullness of floor-length drapery." },
+      { title: "Fabric selection", copy: "Hundreds of designer fabrics, from light-filtering linen to full blackout weaves rated for DFW sun." },
+      { title: "Cordless by default", copy: "Every Roman shade we install is cordless or motorized, meeting current safety standards for homes with kids and pets." },
+      { title: "Liner options", copy: "Add a privacy or blackout liner behind the face fabric for bedrooms and media rooms without changing the look from outside." },
+    ],
+    faqs: [
+      { q: "What's the difference between flat, relaxed, and structured folds?", a: "Flat Roman shades lie smooth when lowered for a tailored look; relaxed styles have a soft curve at the bottom; structured styles hold crisp, defined folds even when raised. Your designer can show samples of each in your room." },
+      { q: "Can Roman shades provide blackout?", a: "Yes — a blackout liner can be added behind most face fabrics for bedrooms and media rooms, while keeping the same fabric visible from the room." },
+      { q: "Are Roman shades safe for kids and pets?", a: "Every Roman shade we install is cordless or motorized as standard, which is generally considered safer than corded systems." },
+      { q: "Can Roman shades be motorized?", a: "Yes, using the same in-tube motors as our roller and zebra shade lines." },
+    ],
+    visual: "drape",
+    designOptions: [
+      { label: "Materials", value: "Hundreds of designer fabrics, light-filtering to full blackout" },
+      { label: "Fold Style", value: "Flat, relaxed, or structured" },
+      { label: "Privacy", value: "Adjustable by fabric opacity; liner option for full privacy" },
+      { label: "Motorization", value: "Cordless as standard, motorized available" },
+      { label: "Style", value: "Tailored and soft — a middle ground between shades and drapery" },
+      { label: "Best For", value: "Bedrooms, dining rooms, and rooms wanting softness without full drapery" },
+    ],
+  },
+  {
     slug: "woven-woods",
     name: "Woven Woods",
     shortName: "Woven Woods",
