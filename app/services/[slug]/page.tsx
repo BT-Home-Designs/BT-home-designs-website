@@ -14,6 +14,7 @@ import { Checklist } from "@/components/Checklist";
 import { Accordion } from "@/components/Accordion";
 import { FadeIn } from "@/components/FadeIn";
 import { TrustBadges } from "@/components/TrustBadges";
+import { PlantationShutterGallery } from "@/components/PlantationShutterGallery";
 import { services, getServiceBySlug } from "@/lib/data/services";
 import { serviceHeroImages } from "@/lib/data/media";
 import { serviceGuides, consultationSteps } from "@/lib/data/serviceGuides";
@@ -104,6 +105,8 @@ export default async function ServicePage({ params }: ServicePageProps) {
           )}
         </FadeIn>
       </section>
+
+      {service.slug === "plantation-shutters" && <PlantationShutterGallery />}
 
       {/* Product overview / intro */}
       <section className="py-20 lg:py-28">
