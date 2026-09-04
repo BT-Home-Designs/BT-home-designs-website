@@ -3,8 +3,8 @@ import { SignOutButton } from "./SignOutButton";
 
 const navLinks = [
   { label: "Dashboard", href: "/internal" },
-  { label: "Quotes", href: "/internal", disabled: true },
-  { label: "Customers", href: "/internal", disabled: true },
+  { label: "Quotes", href: "/internal/quotes" },
+  { label: "Customers", href: "/internal/customers" },
 ];
 
 export function InternalNav({ userEmail, userName }: { userEmail: string; userName: string }) {
@@ -16,17 +16,11 @@ export function InternalNav({ userEmail, userName }: { userEmail: string; userNa
             BT Home Designs <span className="text-oak-dark">Internal</span>
           </Link>
           <nav className="hidden gap-6 sm:flex">
-            {navLinks.map((link) =>
-              link.disabled ? (
-                <span key={link.label} className="text-[13px] text-charcoal-soft/40" title="Coming in a later phase">
-                  {link.label}
-                </span>
-              ) : (
-                <Link key={link.label} href={link.href} className="text-[13px] font-medium text-charcoal-soft hover:text-charcoal">
-                  {link.label}
-                </Link>
-              )
-            )}
+            {navLinks.map((link) => (
+              <Link key={link.label} href={link.href} className="text-[13px] font-medium text-charcoal-soft hover:text-charcoal">
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
         <div className="flex items-center gap-4">
