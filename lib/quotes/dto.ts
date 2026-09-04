@@ -5,7 +5,6 @@
  * happens once, here, rather than ad hoc in each page/action.
  */
 import type { Prisma } from "@prisma/client";
-import { normalizeFabricName } from "@/lib/pricing/matrix-engine/fabricCatalog";
 
 const lineItemWithRelations = {
   include: {
@@ -13,7 +12,7 @@ const lineItemWithRelations = {
     vendor: true,
     fabric: true,
     color: true,
-    pricingSnapshots: { orderBy: { createdAt: "desc" as const }, take: 1 },
+    currentPricingSnapshot: true,
   },
 } satisfies Prisma.QuoteLineItemDefaultArgs;
 
@@ -36,14 +35,6 @@ export interface PricingSnapshotDTO {
   dealerCostCents: number | null;
   warnings: string[];
   createdAt: string;
-  /**
-   * False when the line item's live fabric/width/height no longer match
-   * what this snapshot priced (e.g. the fabric or a dimension was changed
-   * or cleared after this snapshot was created, but the item hasn't been
-   * re-saved yet). The snapshot itself is never mutated or hidden — the
-   * UI uses this flag to avoid presenting an outdated price as current.
-   */
-  isCurrent: boolean;
 }
 
 export interface LineItemDTO {
@@ -71,10 +62,17 @@ export interface LineItemDTO {
   notes: string | null;
   sellingPriceStatus: string;
   sellingPriceCents: number | null;
-  latestSnapshot: PricingSnapshotDTO | null;
+  /**
+   * Whatever QuoteLineItem.currentPricingSnapshotId points at — the latest
+   * pricing attempt for this item's CURRENT fabric/width/height, success
+   * or failure. Null means pricing was never attempted for the current
+   * inputs (not "unpriced forever" — see lib/quotes/pricing.ts). Check
+   * `.pricingStatus` to know whether it's a usable price.
+   */
+  currentSnapshot: PricingSnapshotDTO | null;
 }
 
-function toPricingSnapshotDTO(snapshot: LineItemWithRelations["pricingSnapshots"][number], isCurrent: boolean): PricingSnapshotDTO {
+function toPricingSnapshotDTO(snapshot: NonNullable<LineItemWithRelations["currentPricingSnapshot"]>): PricingSnapshotDTO {
   return {
     id: snapshot.id,
     pricingEngineVersion: snapshot.pricingEngineVersion,
@@ -92,23 +90,10 @@ function toPricingSnapshotDTO(snapshot: LineItemWithRelations["pricingSnapshots"
     dealerCostCents: snapshot.dealerCostCents,
     warnings: snapshot.warnings,
     createdAt: snapshot.createdAt.toISOString(),
-    isCurrent,
   };
 }
 
-/** True when the snapshot's priced inputs still match the line item's live fields. */
-function snapshotMatchesCurrentInputs(lineItem: LineItemWithRelations, snapshot: LineItemWithRelations["pricingSnapshots"][number]): boolean {
-  if (!lineItem.fabric) return false;
-  if (normalizeFabricName(lineItem.fabric.sourceName) !== snapshot.normalizedFabricName) return false;
-  if (lineItem.width === null || snapshot.actualWidth === null) return false;
-  if (lineItem.height === null || snapshot.actualHeight === null) return false;
-  return lineItem.width.toNumber() === snapshot.actualWidth.toNumber() && lineItem.height.toNumber() === snapshot.actualHeight.toNumber();
-}
-
 export function toLineItemDTO(lineItem: LineItemWithRelations): LineItemDTO {
-  const latestSnapshotRow = lineItem.pricingSnapshots[0];
-  const latestSnapshot = latestSnapshotRow ? toPricingSnapshotDTO(latestSnapshotRow, snapshotMatchesCurrentInputs(lineItem, latestSnapshotRow)) : null;
-
   return {
     id: lineItem.id,
     quoteId: lineItem.quoteId,
@@ -134,7 +119,7 @@ export function toLineItemDTO(lineItem: LineItemWithRelations): LineItemDTO {
     notes: lineItem.notes,
     sellingPriceStatus: lineItem.sellingPriceStatus,
     sellingPriceCents: lineItem.sellingPriceCents,
-    latestSnapshot,
+    currentSnapshot: lineItem.currentPricingSnapshot ? toPricingSnapshotDTO(lineItem.currentPricingSnapshot) : null,
   };
 }
 

@@ -248,7 +248,19 @@ model QuoteLineItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  pricingSnapshots PricingSnapshot[]
+  pricingSnapshots PricingSnapshot[] @relation("LineItemSnapshotHistory")
+
+  /// Points at the PricingSnapshot that reflects THIS line item's current
+  /// fabric/width/height — i.e. the latest pricing attempt made since
+  /// those inputs last changed, success or failure. Never left pointing at
+  /// a stale snapshot from before an input change: repriceLineItemIfNeeded
+  /// (lib/quotes/pricing.ts) updates this every time it creates a new
+  /// snapshot, and clears it to null when pricing isn't even attempted
+  /// (e.g. fabric/product/dimensions missing). The full history in
+  /// `pricingSnapshots` above is never touched by this pointer moving —
+  /// it only ever gains rows.
+  currentPricingSnapshotId String?          @unique
+  currentPricingSnapshot   PricingSnapshot? @relation("LineItemCurrentSnapshot", fields: [currentPricingSnapshotId], references: [id])
 
   @@map("quote_line_items")
 }
@@ -354,13 +366,20 @@ model Color {
 /// QuoteLineItem. Never updated or overwritten — if a line item is
 /// re-priced (fabric/size change, engine version bump, etc.), a NEW row is
 /// created. A historical quote's displayed price therefore never silently
-/// changes when the catalog or engine changes later; "the current price"
-/// for a line item is its most recent snapshot by createdAt.
+/// changes when the catalog or engine changes later. "The current price"
+/// for a line item is whichever snapshot QuoteLineItem.currentPricingSnapshotId
+/// points at (see that field) — not simply the most recent row here, since
+/// a failed reprice attempt still becomes the newest row without being a
+/// usable price.
 model PricingSnapshot {
   id String @id @default(cuid())
 
   quoteLineItemId String
-  quoteLineItem   QuoteLineItem @relation(fields: [quoteLineItemId], references: [id], onDelete: Cascade)
+  quoteLineItem   QuoteLineItem @relation("LineItemSnapshotHistory", fields: [quoteLineItemId], references: [id], onDelete: Cascade)
+
+  /// Back-reference for QuoteLineItem.currentPricingSnapshot — do not use
+  /// this to find "the" line item's history; use quoteLineItemId above.
+  currentForLineItem QuoteLineItem? @relation("LineItemCurrentSnapshot")
 
   /// Identifies which build of the pricing engine produced this snapshot
   /// (see lib/pricing/version.ts). Lets a future engine change be

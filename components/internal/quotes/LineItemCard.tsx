@@ -295,7 +295,7 @@ export function LineItemCard({
       </button>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
-        <PricingPanel productType={selectedProduct?.productType ?? null} snapshot={item.latestSnapshot} />
+        <PricingPanel productType={selectedProduct?.productType ?? null} snapshot={item.currentSnapshot} />
         <div className="text-[11px] text-charcoal-soft sm:text-right">
           <p className="font-medium uppercase tracking-wide">Selling Price</p>
           <p>{item.sellingPriceStatus === "NOT_CONFIGURED" ? "NOT CONFIGURED" : `$${((item.sellingPriceCents ?? 0) / 100).toFixed(2)}`}</p>

@@ -34,15 +34,6 @@ export function PricingPanel({ productType, snapshot }: { productType: string | 
     );
   }
 
-  if (!snapshot.isCurrent) {
-    return (
-      <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-900">
-        <span className="font-semibold">Pricing is out of date</span> — fabric or dimensions changed since this was
-        last priced. Save this line item to recalculate.
-      </div>
-    );
-  }
-
   if (snapshot.pricingStatus !== "SUCCESS") {
     return (
       <div className="space-y-1.5 rounded-sm border border-red-300 bg-red-50 px-3 py-2.5 text-[12px] text-red-900">
