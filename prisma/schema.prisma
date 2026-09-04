@@ -1,9 +1,11 @@
 // Prisma schema for the BT Home Designs internal application.
 //
-// Phase 2 (foundations) scope: only the User model needed to authenticate
-// internal staff. Quote/customer/pricing models are added in later phases
-// once the corresponding business rules are approved — see AGENTS.md /
-// project history for the phased plan.
+// Phase 2: InternalUser (staff auth) only.
+// Phase 3: adds the foundational Customer/Quote/Product/Pricing data model
+// and the models backing the verified Roller Shade / Neolux matrix pricing
+// engine (see lib/pricing/matrix-engine/). No quote UI, PDF generation, or
+// customer-selling-price rules are wired up yet — see AGENTS.md / project
+// history for the phased plan.
 
 generator client {
   provider = "prisma-client-js"
@@ -32,5 +34,368 @@ model InternalUser {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
+  quotesCreated Quote[] @relation("QuoteCreatedBy")
+
   @@map("internal_users")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DEPOSIT_PAID
+  ORDERED
+  IN_PRODUCTION
+  READY_FOR_INSTALLATION
+  INSTALLED
+  PAID_IN_FULL
+  CANCELLED
+}
+
+/// A quote-level discount (or deposit) is either a percentage of the
+/// subtotal or a flat dollar amount — never both at once. Which numeric
+/// field on Quote is authoritative depends on this type; see the field
+/// comments on Quote below.
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum DepositType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+/// Customer-selling-price business rules have not been supplied yet
+/// (locked as a separate, later decision from vendor/dealer cost). Every
+/// selling-price field defaults to NOT_CONFIGURED with a null price — no
+/// markup, margin, or vendor-retail passthrough is invented here.
+enum SellingPriceStatus {
+  NOT_CONFIGURED
+  SET
+}
+
+enum ProductType {
+  ROLLER_SHADE
+  NEOLUX
+  PLANTATION_SHUTTER
+  DRAPERY
+  EXTERIOR_SHADE
+  FAUX_WOOD_BLIND
+  OTHER
+}
+
+/// How a QuoteLineItem's price is calculated. Only MATRIX_PRICE has a real
+/// implementation as of Phase 3 (lib/pricing/matrix-engine/) — the rest
+/// exist as typed placeholders so the schema/UI don't have to be redesigned
+/// once their business rules are supplied.
+enum PricingStrategyType {
+  MATRIX_PRICE
+  SQUARE_FOOT
+  FIXED_PRICE
+  MANUAL_PRICE
+  COMPOSITE_PRICE
+}
+
+/// The five verified Roller Shade / Neolux price groups. Locked — do not
+/// rename or add to this list without an updated, re-verified source matrix.
+enum PriceGroup {
+  A
+  B
+  C
+  D
+  E
+}
+
+/// Outcome of one matrix-pricing calculation, persisted on PricingSnapshot.
+/// SUCCESS is the only status with non-null pricing fields — see the
+/// "STRICT ERROR CONTRACT" in lib/pricing/matrix-engine/engine.ts.
+enum PricingStatus {
+  SUCCESS
+  OUT_OF_MATRIX_RANGE
+  UNKNOWN_FABRIC
+  INVALID_DIMENSIONS
+  CONFIGURATION_ERROR
+}
+
+// ---------------------------------------------------------------------------
+// Customers & Quotes
+// ---------------------------------------------------------------------------
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  city      String?
+  state     String?
+  zip       String?
+  phone     String?
+  email     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quotes Quote[]
+
+  @@map("customers")
+}
+
+model Quote {
+  /// Internal, immutable database identity. Never shown to a customer and
+  /// never reused as the human-facing quote number.
+  id String @id @default(cuid())
+
+  /// Human-facing, editable quote number (e.g. "Q-2026-0001"). Auto-generated
+  /// at creation (see lib/quotes/quoteNumber.ts once quote-creation exists)
+  /// but an authorized staff user may rename it later — nothing else in the
+  /// schema references it, so renaming never breaks a relationship.
+  quoteNumber String @unique
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  quoteDate DateTime    @default(now())
+  status    QuoteStatus @default(DRAFT)
+  notes     String?
+
+  /// Quote-level discount only in Phase 3. Line-item discounts are a later
+  /// phase (see AGENTS.md / project history) — this schema doesn't block
+  /// adding a parallel discount on QuoteLineItem when that's approved.
+  discountType DiscountType?
+  /// Meaning depends on discountType: basis points (e.g. 1000 = 10.00%) when
+  /// PERCENTAGE, cents when FIXED_AMOUNT. Null when discountType is null.
+  discountValue Int?
+
+  /// Basis points, e.g. 825 = 8.25%. Stored per-quote (not read from a global
+  /// default at render time) so a historical quote's tax never changes if the
+  /// business's default rate changes later.
+  taxRateBps Int @default(0)
+
+  depositType DepositType?
+  /// Meaning depends on depositType: basis points when PERCENTAGE, cents
+  /// when FIXED_AMOUNT. Null when depositType is null.
+  depositValue     Int?
+  depositPaidCents Int  @default(0)
+
+  createdById String?
+  createdBy   InternalUser? @relation("QuoteCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lineItems QuoteLineItem[]
+
+  @@map("quotes")
+}
+
+model QuoteLineItem {
+  id      String @id @default(cuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  /// Explicit manual ordering within a quote — line items are added,
+  /// duplicated, removed, and reordered freely, so this is a plain integer
+  /// staff-controlled position, not a database identity.
+  sortOrder Int @default(0)
+
+  room             String?
+  windowIdentifier String?
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  vendorId String?
+  vendor   Vendor?  @relation(fields: [vendorId], references: [id])
+
+  /// Actual entered dimensions, in inches. Decimal (not float) so the
+  /// pricing engine's breakpoint comparisons (e.g. 36 vs 36.001) are never
+  /// subject to binary floating-point error.
+  width  Decimal? @db.Decimal(7, 3)
+  height Decimal? @db.Decimal(7, 3)
+
+  quantity Int @default(1)
+
+  fabricId String?
+  fabric   Fabric? @relation(fields: [fabricId], references: [id])
+
+  colorId String?
+  color   Color?  @relation(fields: [colorId], references: [id])
+
+  mountType     String?
+  controlType   String?
+  motorization  String?
+  remote        String?
+  hub           String?
+  solarCharger  String?
+  /// Free-form hardware/option tags (e.g. "Fascia", "Cassette Valance").
+  /// Not every product uses this — empty by default.
+  hardwareOptions String[] @default([])
+  installation    String?
+  notes           String?
+
+  pricingStrategyType PricingStrategyType?
+
+  /// Customer selling price is a separate, not-yet-configured business
+  /// decision from vendor/dealer cost (see PricingSnapshot below). Never
+  /// auto-derived from dealer cost or vendor retail — see SellingPriceStatus.
+  sellingPriceStatus SellingPriceStatus @default(NOT_CONFIGURED)
+  sellingPriceCents  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pricingSnapshots PricingSnapshot[]
+
+  @@map("quote_line_items")
+}
+
+// ---------------------------------------------------------------------------
+// Catalog: Vendors, Products, Fabrics, Colors
+// ---------------------------------------------------------------------------
+
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products       Product[]
+  quoteLineItems QuoteLineItem[]
+
+  @@map("vendors")
+}
+
+model Product {
+  id     String      @id @default(cuid())
+  name   String
+  productType ProductType
+
+  vendorId String
+  vendor   Vendor @relation(fields: [vendorId], references: [id])
+
+  defaultPricingStrategyType PricingStrategyType
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fabrics        Fabric[]
+  colors         Color[]
+  quoteLineItems QuoteLineItem[]
+
+  @@map("products")
+}
+
+model Fabric {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  /// Exact vendor/source spelling, preserved verbatim — including any
+  /// apparent typos (e.g. "STUCKO BLACKOUT"). Never silently "corrected".
+  sourceName String
+
+  /// Derived, lookup-only form of sourceName (trim/whitespace/case
+  /// normalized) — used for engine catalog matching, never as identity.
+  /// The Fabric row's `id` is the stable identity; see
+  /// lib/pricing/matrix-engine/fabricCatalog.ts.
+  normalizedName String @unique
+
+  /// Null for fabrics that don't use matrix pricing (not applicable yet —
+  /// every fabric seeded in Phase 3 belongs to the verified A-E catalog).
+  priceGroup PriceGroup?
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quoteLineItems QuoteLineItem[]
+  colors         Color[]
+
+  @@unique([productId, sourceName])
+  @@map("fabrics")
+}
+
+model Color {
+  id   String @id @default(cuid())
+  name String
+
+  /// A color usually belongs to a specific fabric; some product families
+  /// (e.g. shutters) may instead attach color directly to the product with
+  /// no fabric in between. At most one of these is expected to be set —
+  /// enforced at the application layer, not the database, since Prisma
+  /// doesn't support a declarative "exactly one of" constraint here.
+  fabricId String?
+  fabric   Fabric? @relation(fields: [fabricId], references: [id])
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quoteLineItems QuoteLineItem[]
+
+  @@map("colors")
+}
+
+// ---------------------------------------------------------------------------
+// Pricing audit
+// ---------------------------------------------------------------------------
+
+/// An immutable, append-only record of one pricing-engine calculation for a
+/// QuoteLineItem. Never updated or overwritten — if a line item is
+/// re-priced (fabric/size change, engine version bump, etc.), a NEW row is
+/// created. A historical quote's displayed price therefore never silently
+/// changes when the catalog or engine changes later; "the current price"
+/// for a line item is its most recent snapshot by createdAt.
+model PricingSnapshot {
+  id String @id @default(cuid())
+
+  quoteLineItemId String
+  quoteLineItem   QuoteLineItem @relation(fields: [quoteLineItemId], references: [id], onDelete: Cascade)
+
+  /// Identifies which build of the pricing engine produced this snapshot
+  /// (see lib/pricing/version.ts). Lets a future engine change be
+  /// distinguished from a data change when auditing an old quote.
+  pricingEngineVersion String
+
+  pricingStatus PricingStatus
+
+  /// Preserved verbatim, even on failure — see "STRICT ERROR CONTRACT" in
+  /// lib/pricing/matrix-engine/engine.ts.
+  sourceFabricName     String
+  normalizedFabricName String
+
+  productType ProductType?
+  priceGroup  PriceGroup?
+
+  /// Entered dimensions, always present when representable as a Decimal —
+  /// null only for the (INVALID_DIMENSIONS) case of a non-finite input
+  /// (NaN/Infinity), which cannot be stored as a SQL numeric value; the
+  /// pricingStatus + warnings still explain why pricing failed.
+  actualWidth  Decimal? @db.Decimal(7, 3)
+  actualHeight Decimal? @db.Decimal(7, 3)
+
+  /// Breakpoint values (always whole inches per the locked breakpoint
+  /// lists), null on any non-SUCCESS result.
+  selectedWidthTier  Int?
+  selectedHeightTier Int?
+
+  retailCents         Int?
+  dealerMultiplierBps Int?
+  dealerCostCents     Int?
+
+  warnings String[] @default([])
+
+  createdAt DateTime @default(now())
+
+  @@map("pricing_snapshots")
 }
