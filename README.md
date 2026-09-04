@@ -80,7 +80,13 @@ app/
   service-area/page.tsx       Service-area index
   service-area/[slug]/page.tsx  Single template rendering all 15 cities
   api/quote/route.ts          Form submission endpoint (see "Quote and Contact Forms")
+  api/auth/[...nextauth]/route.ts  Internal-app login endpoint (next-auth)
+  internal/login/page.tsx      Staff sign-in (public route, no session required)
+  internal/(dashboard)/        Authenticated internal app shell + dashboard placeholder
+middleware.ts                Blocks unauthenticated requests to /internal (see "Internal Application")
 components/                 All reusable UI (Navbar, Footer, forms, gallery, etc.)
+  internal/                   Internal-app-only UI (nav, login form, sign-out button)
+  SiteChrome.tsx               Hides the public navbar/footer/analytics under /internal
 lib/
   data/business.ts          Single source of truth for business info
   data/services.ts           Content for all 7 service pages
@@ -88,6 +94,13 @@ lib/
   data/testimonials.ts         Placeholder testimonial content (see file header)
   data/gallery.ts               Gallery item metadata
   utils.ts                    cn() className helper
+  auth/options.ts              next-auth configuration (Credentials provider, JWT sessions)
+  db/prisma.ts                  Prisma client singleton
+prisma/
+  schema.prisma                Database schema (currently: InternalUser only)
+  migrations/                    Applied schema history
+scripts/
+  create-internal-user.ts       CLI to add/update staff accounts (see "Internal Application")
 public/
   images/                    Image folders by section (see "Replacing Images")
   fonts/                       Empty, reserved for future local font files
@@ -180,9 +193,12 @@ LEAD_NOTIFICATION_EMAIL=        # required — the inbox that receives leads
 RESEND_FROM_EMAIL=              # optional, defaults to the verified leads@mail.bthomedesigns.com sender
 NEXT_PUBLIC_GA_MEASUREMENT_ID=  # optional — Google Analytics 4, "G-XXXXXXXXXX"
 NEXT_PUBLIC_GSC_VERIFICATION=   # optional — Google Search Console ownership token
+DATABASE_URL=                   # required only for /internal — see "Internal Application" below
+NEXTAUTH_SECRET=                # required only for /internal — see "Internal Application" below
+NEXTAUTH_URL=                   # required only for /internal — see "Internal Application" below
 ```
 
-None of these are set anywhere in this repository or its deployment config — no account has been created and no value has been invented. Every one of them is safe to leave unset: the site builds and runs normally, lead delivery just honestly reports itself unavailable until `RESEND_API_KEY`/`LEAD_NOTIFICATION_EMAIL` are set, and analytics simply doesn't load until its variable is set. Never commit real secrets — `.env.example` is intentionally tracked (values blank) so the required names are documented, while `.env.local` and any other real `.env*` file stay out of version control.
+None of these are set anywhere in this repository or its deployment config — no account has been created and no value has been invented. Every one of them is safe to leave unset for the **public site**: it builds and runs normally, lead delivery just honestly reports itself unavailable until `RESEND_API_KEY`/`LEAD_NOTIFICATION_EMAIL` are set, and analytics simply doesn't load until its variable is set. The three internal-app variables are different: leaving them unset means `/internal` is unusable (no database connection, no session signing), but this has **no effect on the public marketing site**, which doesn't read them. Never commit real secrets — `.env.example` is intentionally tracked (values blank) so the required names are documented, while `.env`, `.env.local`, and any other real `.env*` file stay out of version control.
 
 ## Deploying to Vercel
 
@@ -192,6 +208,39 @@ None of these are set anywhere in this repository or its deployment config — n
 4. Add the environment variables from the section above under Project Settings -> Environment Variables. At minimum, set `RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` before launch so the forms actually deliver leads.
 5. Deploy. Vercel's default output handling (static pages served from the edge, the one dynamic API route served as a serverless/edge function) requires no extra configuration for this project.
 6. Under Project Settings -> Domains, add the production domain and update `siteUrl` references — currently `https://www.bthomedesigns.com` in `lib/data/business.ts` (`urls.website`) and used throughout `app/layout.tsx` and `app/sitemap.ts` — to match.
+
+## Internal Application (Staff Quoting System — Foundations)
+
+`/internal` is a separate, authenticated area of this same Next.js project for BT Home Designs staff — not visible or linked anywhere on the public site. It's being built in phases; this is the foundations phase (auth, database, protected routing) only. There is no quote editor, pricing, or customer data yet.
+
+**Setup:**
+
+1. Create a Postgres database (see "Choosing a database provider" below) and set `DATABASE_URL` in `.env` (local) or your deployment's environment variables.
+2. Generate a session secret: `openssl rand -base64 32`, and set it as `NEXTAUTH_SECRET`.
+3. Set `NEXTAUTH_URL` to the app's own URL (`http://localhost:3000` locally; the real deployed URL in production).
+4. Apply the database schema: `npm run db:migrate`.
+5. Create your staff account: `npm run db:create-user -- --email=you@example.com --password="a strong password" --name="Your Name" --role=ADMIN`.
+6. Sign in at `/internal/login`.
+
+There is no self-serve "create account" page by design — staff accounts are provisioned via `db:create-user` (re-run it with an existing email to update that person's name/password/role). A management UI is a candidate for a later phase, once there's more than one or two staff members.
+
+**Choosing a database provider (free tier during development):**
+
+Any standard PostgreSQL connection string works — this project doesn't lock you into one vendor. Recommended for a small business on a budget:
+
+| Service | Purpose | Free tier | Expected cost | Alternative |
+|---|---|---|---|---|
+| [Neon](https://neon.tech) | Managed Postgres for `/internal` (quotes, customers, pricing data — added in later phases) | Yes — 1 project, ~0.5 GB storage, generous compute hours/month, sufficient for a single small business's internal tool | $0 while on the free tier. Neon's paid plans start if storage/compute usage grows well beyond a small internal tool's needs (many quotes/years of history) — the free tier has no time limit, it doesn't expire | [Supabase](https://supabase.com) (also has a free Postgres tier + built-in file storage, useful later for swatch/product images) or [Vercel Postgres](https://vercel.com/storage/postgres) (same Neon infrastructure, managed through the Vercel dashboard) |
+
+None of the code in this repository requires Neon specifically — set `DATABASE_URL` to any Postgres connection string and it works. No database account has been created on your behalf; you'll need to sign up and paste the connection string in yourself.
+
+**What's implemented:**
+
+- `middleware.ts` — blocks unauthenticated requests to everything under `/internal` (except the login page itself) at the edge, before any page or data loads.
+- `app/internal/(dashboard)/layout.tsx` — re-checks the session server-side as defense-in-depth, independent of middleware.
+- `lib/auth/options.ts` — email/password login (next-auth Credentials provider, bcrypt-hashed passwords, JWT sessions — no OAuth/SSO, deliberately simple for a small internal team).
+- `prisma/schema.prisma` — the `InternalUser` model (staff accounts). Quote/customer/pricing models are added in later phases as those features are built.
+- The public marketing site (`app/layout.tsx` and everything under it) is unchanged for every route except that it now hides its navbar/footer/analytics under `/internal` via `components/SiteChrome.tsx` — a client-side pathname check. **Known limitation:** because of how React Server Components serialize a tree, the marketing footer's *inert* data (link text, city/service names) can still be present in the internal login page's initial JavaScript payload even though it's never rendered into the visible page — it is not indexable, not visible to a user, and (today) contains no business/customer/pricing data, since none exists yet. A later phase should switch `/internal` to its own root layout (a Next.js "multiple root layouts" route-group split) to remove this entirely once the internal UI is actively being designed.
 
 ## SEO
 
@@ -252,3 +301,5 @@ Everything below needs real information or a real account/credential before laun
 | Legal pages | Published as general policies; **not attorney-reviewed** | `app/privacy-policy`, `app/terms-of-use`, `app/accessibility-statement` |
 | Google Analytics / Search Console | Not connected — see `.env.example` | `NEXT_PUBLIC_GA_MEASUREMENT_ID` / `NEXT_PUBLIC_GSC_VERIFICATION` |
 | Fraunces/Manrope font files | Not bundled; system font fallback in use | see "Typography" |
+| Internal app database | **Not configured** — no Postgres provider has been chosen/created; `/internal` cannot be used until `DATABASE_URL`/`NEXTAUTH_SECRET`/`NEXTAUTH_URL` are set | `.env.example`, see "Internal Application" |
+| Internal staff accounts | None exist until `npm run db:create-user` is run | see "Internal Application" |

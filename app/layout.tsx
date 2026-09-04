@@ -6,6 +6,7 @@ import { FloatingCTA } from "@/components/FloatingCTA";
 import { LocalBusinessSchema } from "@/components/LocalBusinessSchema";
 import { Analytics } from "@/components/Analytics";
 import { UtmCapture } from "@/components/UtmCapture";
+import { SiteChrome } from "@/components/SiteChrome";
 import { business } from "@/lib/data/business";
 
 // Typography: system font stack, no next/font/google or any external font
@@ -59,13 +60,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="antialiased">
-        <LocalBusinessSchema />
-        <Analytics />
-        <UtmCapture />
-        <Navbar />
+        <SiteChrome>
+          <LocalBusinessSchema />
+          <Analytics />
+          <UtmCapture />
+          <Navbar />
+        </SiteChrome>
         <main>{children}</main>
-        <Footer />
-        <FloatingCTA />
+        <SiteChrome>
+          <Footer />
+          <FloatingCTA />
+        </SiteChrome>
       </body>
     </html>
   );

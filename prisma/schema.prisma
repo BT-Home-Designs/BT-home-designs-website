@@ -1,0 +1,36 @@
+// Prisma schema for the BT Home Designs internal application.
+//
+// Phase 2 (foundations) scope: only the User model needed to authenticate
+// internal staff. Quote/customer/pricing models are added in later phases
+// once the corresponding business rules are approved — see AGENTS.md /
+// project history for the phased plan.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InternalUserRole {
+  ADMIN
+  STAFF
+}
+
+/// Internal staff accounts for the protected /internal application.
+/// Unrelated to the public site's visitors — this table has nothing to do
+/// with customers or leads.
+model InternalUser {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  passwordHash String
+  name         String
+  role         InternalUserRole @default(STAFF)
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@map("internal_users")
+}
