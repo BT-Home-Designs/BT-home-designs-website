@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { repriceLineItemIfNeeded } from "./pricing";
+import { applyAutomaticSellingPrice } from "./sellingPrice";
 
 export interface LineItemFieldsInput {
   room: string | null;
@@ -58,7 +59,7 @@ export async function updateLineItem(id: string, input: LineItemFieldsInput) {
     pricingStrategyType = product.defaultPricingStrategyType;
   }
 
-  const lineItem = await prisma.quoteLineItem.update({
+  await prisma.quoteLineItem.update({
     where: { id },
     data: {
       room: cleanOptional(input.room),
@@ -84,6 +85,14 @@ export async function updateLineItem(id: string, input: LineItemFieldsInput) {
   });
 
   const repriceResult = await repriceLineItemIfNeeded(id);
+  // Re-evaluate the automatic selling price whenever cost may have
+  // changed — never touches an item whose price was set MANUAL.
+  await applyAutomaticSellingPrice(id);
+
+  // Both side effects above write further fields (currentPricingSnapshotId,
+  // sellingPrice*) on this row after the `update` call, so the caller
+  // needs one fresh read at the end rather than the pre-side-effects row.
+  const lineItem = await prisma.quoteLineItem.findUniqueOrThrow({ where: { id } });
   return { lineItem, repriceResult };
 }
 
@@ -129,6 +138,10 @@ export async function duplicateLineItem(id: string) {
   });
 
   await repriceLineItemIfNeeded(copy.id);
+  // The copy starts at NOT_CONFIGURED (schema default) — never inherits
+  // the original's manual selling price. Apply an automatic rule if one
+  // resolves for its product.
+  await applyAutomaticSellingPrice(copy.id);
   return copy;
 }
 

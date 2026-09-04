@@ -6,11 +6,24 @@ import { prisma } from "@/lib/db/prisma";
 import { addLineItem, updateLineItem, duplicateLineItem, deleteLineItem, reorderLineItem, type LineItemFieldsInput } from "@/lib/quotes/lineItems";
 import { updateQuoteHeader, type QuoteHeaderInput } from "@/lib/quotes/quotes";
 import { toLineItemDTO, LINE_ITEM_INCLUDE, type LineItemDTO } from "@/lib/quotes/dto";
+import { getKnownAddOnCostsCents } from "@/lib/quotes/fixedPriceOptions";
+import { setManualSellingPrice, clearSellingPrice } from "@/lib/quotes/sellingPrice";
 import type { QuoteStatus, DiscountType, DepositType } from "@prisma/client";
 
 async function loadLineItemDTO(id: string): Promise<LineItemDTO> {
-  const item = await prisma.quoteLineItem.findUniqueOrThrow({ where: { id }, include: LINE_ITEM_INCLUDE });
-  return toLineItemDTO(item);
+  const [item, knownAddOnCostsCents] = await Promise.all([
+    prisma.quoteLineItem.findUniqueOrThrow({ where: { id }, include: LINE_ITEM_INCLUDE }),
+    getKnownAddOnCostsCents(),
+  ]);
+  return toLineItemDTO(item, knownAddOnCostsCents);
+}
+
+async function loadLineItemDTOs(quoteId: string): Promise<LineItemDTO[]> {
+  const [items, knownAddOnCostsCents] = await Promise.all([
+    prisma.quoteLineItem.findMany({ where: { quoteId }, orderBy: { sortOrder: "asc" }, include: LINE_ITEM_INCLUDE }),
+    getKnownAddOnCostsCents(),
+  ]);
+  return items.map((item) => toLineItemDTO(item, knownAddOnCostsCents));
 }
 
 function getOptional(formData: FormData, key: string): string | null {
@@ -85,12 +98,7 @@ export async function duplicateLineItemAction(lineItemId: string, quoteId: strin
   await requireInternalUser();
   await duplicateLineItem(lineItemId);
   revalidatePath(`/internal/quotes/${quoteId}`);
-  const items = await prisma.quoteLineItem.findMany({
-    where: { quoteId },
-    orderBy: { sortOrder: "asc" },
-    include: LINE_ITEM_INCLUDE,
-  });
-  return items.map(toLineItemDTO);
+  return loadLineItemDTOs(quoteId);
 }
 
 export async function deleteLineItemAction(lineItemId: string, quoteId: string): Promise<void> {
@@ -103,12 +111,41 @@ export async function reorderLineItemAction(lineItemId: string, quoteId: string,
   await requireInternalUser();
   await reorderLineItem(lineItemId, direction);
   revalidatePath(`/internal/quotes/${quoteId}`);
-  const items = await prisma.quoteLineItem.findMany({
-    where: { quoteId },
-    orderBy: { sortOrder: "asc" },
-    include: LINE_ITEM_INCLUDE,
+  return loadLineItemDTOs(quoteId);
+}
+
+/**
+ * Sets an explicit manual selling price on one line item — requires a
+ * reason, records who/when, and never touches the item's dealer cost /
+ * pricing snapshot (see lib/quotes/sellingPrice.ts). Marks the price
+ * MANUAL so a later automatic reprice pass never silently replaces it.
+ */
+export async function setManualSellingPriceAction(lineItemId: string, quoteId: string, formData: FormData): Promise<LineItemDTO> {
+  const user = await requireInternalUser();
+  const priceDollarsRaw = formData.get("sellingPriceDollars");
+  const reason = String(formData.get("reason") ?? "");
+
+  const priceDollars = typeof priceDollarsRaw === "string" ? Number(priceDollarsRaw) : NaN;
+  if (!Number.isFinite(priceDollars) || priceDollars < 0) {
+    throw new Error("Enter a valid, non-negative selling price.");
+  }
+
+  await setManualSellingPrice({
+    lineItemId,
+    sellingPriceCents: Math.round(priceDollars * 100),
+    setByUserId: user.id,
+    reason,
   });
-  return items.map(toLineItemDTO);
+  revalidatePath(`/internal/quotes/${quoteId}`);
+  return loadLineItemDTO(lineItemId);
+}
+
+/** Reverts a line item's selling price to NOT_CONFIGURED (clears manual or rule-derived price). */
+export async function clearSellingPriceAction(lineItemId: string, quoteId: string): Promise<LineItemDTO> {
+  await requireInternalUser();
+  await clearSellingPrice(lineItemId);
+  revalidatePath(`/internal/quotes/${quoteId}`);
+  return loadLineItemDTO(lineItemId);
 }
 
 /**

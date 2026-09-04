@@ -1,6 +1,7 @@
+import { Fragment } from "react";
 import { formatCentsAsCurrency, formatInches } from "@/lib/format";
 import { isMatrixSupportedProductType } from "@/lib/quotes/matrixSupportedProductTypes";
-import type { PricingSnapshotDTO } from "@/lib/quotes/dto";
+import type { PricingSnapshotDTO, CostBreakdownDTO } from "@/lib/quotes/dto";
 
 const STATUS_LABELS: Record<string, string> = {
   SUCCESS: "Priced",
@@ -11,12 +12,20 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 /**
- * Internal-only pricing display (vendor retail / dealer cost). Never
- * rendered on any public-facing surface. Selling price is intentionally
- * absent from this panel — see the "Selling Price" line rendered
- * separately by LineItemCard, which always reads NOT CONFIGURED.
+ * INTERNAL COST — vendor retail, dealer cost, add-on costs, total internal
+ * cost, and pricing warnings. Never rendered on any public-facing surface;
+ * customer selling price lives in the separate CustomerPricePanel so the
+ * two are never visually or structurally confused.
  */
-export function PricingPanel({ productType, snapshot }: { productType: string | null; snapshot: PricingSnapshotDTO | null }) {
+export function PricingPanel({
+  productType,
+  snapshot,
+  costBreakdown,
+}: {
+  productType: string | null;
+  snapshot: PricingSnapshotDTO | null;
+  costBreakdown: CostBreakdownDTO;
+}) {
   if (productType && !isMatrixSupportedProductType(productType)) {
     return (
       <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-900">
@@ -52,7 +61,7 @@ export function PricingPanel({ productType, snapshot }: { productType: string | 
 
   return (
     <div className="space-y-2 rounded-sm border border-charcoal/15 bg-cream/50 px-3 py-2.5 text-[12px]">
-      <p className="font-semibold uppercase tracking-wide text-oak-dark">Internal Pricing</p>
+      <p className="font-semibold uppercase tracking-wide text-oak-dark">Internal Cost</p>
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
         <dt className="text-charcoal-soft">Pricing Status</dt>
         <dd className="text-charcoal">{STATUS_LABELS[snapshot.pricingStatus] ?? snapshot.pricingStatus}</dd>
@@ -75,6 +84,30 @@ export function PricingPanel({ productType, snapshot }: { productType: string | 
         <dt className="font-medium text-charcoal-soft">Dealer Cost</dt>
         <dd className="font-medium text-charcoal">{formatCentsAsCurrency(snapshot.dealerCostCents)}</dd>
       </dl>
+
+      {costBreakdown.addOns.length > 0 && (
+        <div className="border-t border-charcoal/10 pt-2">
+          <p className="mb-1 text-[11px] font-medium text-charcoal-soft">Add-On Costs</p>
+          <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+            {costBreakdown.addOns.map((addOn) => (
+              <Fragment key={addOn.name}>
+                <dt className="text-charcoal-soft">{addOn.name}</dt>
+                <dd className={addOn.costCents === null ? "font-medium text-amber-700" : "text-charcoal"}>
+                  {addOn.costCents === null ? "NOT CONFIGURED" : formatCentsAsCurrency(addOn.costCents)}
+                </dd>
+              </Fragment>
+            ))}
+          </dl>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between border-t border-charcoal/10 pt-2 font-medium">
+        <span className="text-charcoal-soft">Total Internal Cost</span>
+        <span className={costBreakdown.totalInternalCostCents === null ? "text-amber-700" : "text-charcoal"}>
+          {costBreakdown.totalInternalCostCents === null ? "NOT CONFIGURED" : formatCentsAsCurrency(costBreakdown.totalInternalCostCents)}
+        </span>
+      </div>
+
       {snapshot.warnings.length > 0 && (
         <div className="space-y-1 rounded-sm border border-amber-300 bg-amber-50 px-2.5 py-2 text-amber-900">
           {snapshot.warnings.map((warning) => (

@@ -34,7 +34,8 @@ model InternalUser {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  quotesCreated Quote[] @relation("QuoteCreatedBy")
+  quotesCreated       Quote[]         @relation("QuoteCreatedBy")
+  sellingPricesSet    QuoteLineItem[] @relation("SellingPriceSetBy")
 
   @@map("internal_users")
 }
@@ -120,6 +121,20 @@ enum PricingStatus {
   UNKNOWN_FABRIC
   INVALID_DIMENSIONS
   CONFIGURATION_ERROR
+}
+
+/// How a line item's customer selling price was determined. The first
+/// four are automatic — computed from an internal cost using a
+/// SellingPriceRule (see below); MANUAL means a staff member entered an
+/// explicit price by hand (see QuoteLineItem.sellingPriceReason etc.).
+/// Recorded on QuoteLineItem.sellingPriceMethod so a quote never shows a
+/// price without knowing exactly how it was produced.
+enum SellingPriceRuleType {
+  MULTIPLIER
+  MARKUP_PERCENT
+  TARGET_MARGIN
+  FIXED_AMOUNT
+  MANUAL
 }
 
 // ---------------------------------------------------------------------------
@@ -242,8 +257,32 @@ model QuoteLineItem {
   /// Customer selling price is a separate, not-yet-configured business
   /// decision from vendor/dealer cost (see PricingSnapshot below). Never
   /// auto-derived from dealer cost or vendor retail — see SellingPriceStatus.
+  /// Stays NOT_CONFIGURED (sellingPriceCents null) until either a
+  /// SellingPriceRule resolves for this item's product (automatic) or a
+  /// staff member sets one manually — see lib/quotes/sellingPrice.ts.
   sellingPriceStatus SellingPriceStatus @default(NOT_CONFIGURED)
   sellingPriceCents  Int?
+
+  /// Which of the 5 approaches produced sellingPriceCents — null when
+  /// NOT_CONFIGURED. MANUAL is never silently replaced by an automatic
+  /// recalculation; see lib/quotes/sellingPrice.ts.
+  sellingPriceMethod SellingPriceRuleType?
+
+  /// Populated only when sellingPriceMethod is one of the 4 automatic
+  /// types — which SellingPriceRule computed this price, for audit.
+  sellingPriceRuleId String?
+  sellingPriceRule   SellingPriceRule? @relation(fields: [sellingPriceRuleId], references: [id], onDelete: SetNull)
+
+  /// Who set the current selling price and when — populated for both
+  /// automatic (rule application) and MANUAL entries. Never touches
+  /// PricingSnapshot / dealer cost, which stay in their own audit trail.
+  sellingPriceSetById String?
+  sellingPriceSetBy   InternalUser? @relation("SellingPriceSetBy", fields: [sellingPriceSetById], references: [id], onDelete: SetNull)
+  sellingPriceSetAt   DateTime?
+
+  /// Optional note — required by the UI when sellingPriceMethod is MANUAL,
+  /// optional/unused for automatic rule applications.
+  sellingPriceReason String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -276,8 +315,9 @@ model Vendor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  products       Product[]
-  quoteLineItems QuoteLineItem[]
+  products         Product[]
+  quoteLineItems   QuoteLineItem[]
+  sellingPriceRule SellingPriceRule?
 
   @@map("vendors")
 }
@@ -296,9 +336,10 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  fabrics        Fabric[]
-  colors         Color[]
-  quoteLineItems QuoteLineItem[]
+  fabrics          Fabric[]
+  colors           Color[]
+  quoteLineItems   QuoteLineItem[]
+  sellingPriceRule SellingPriceRule?
 
   @@map("products")
 }
@@ -356,6 +397,72 @@ model Color {
   quoteLineItems QuoteLineItem[]
 
   @@map("colors")
+}
+
+// ---------------------------------------------------------------------------
+// Customer selling price
+// ---------------------------------------------------------------------------
+
+/// A configurable rule for automatically computing a line item's customer
+/// selling price from its internal cost. No rows exist until BT Home
+/// Designs supplies real values — see lib/quotes/sellingPrice.ts, which
+/// treats an unresolved lookup as NOT_CONFIGURED rather than assuming any
+/// default. Scoped to exactly one of productId / productType / vendorId
+/// (enforced at the application layer, most-specific-wins when resolving:
+/// product, then productType, then vendor).
+model SellingPriceRule {
+  id String @id @default(cuid())
+
+  /// Product-specific rule — most specific scope.
+  productId String?  @unique
+  product   Product? @relation(fields: [productId], references: [id])
+
+  /// Applies to every product of this type that has no product-specific rule.
+  productType ProductType? @unique
+
+  /// Applies to every product from this vendor that has no more specific rule.
+  vendorId String? @unique
+  vendor   Vendor? @relation(fields: [vendorId], references: [id])
+
+  /// One of MULTIPLIER / MARKUP_PERCENT / TARGET_MARGIN / FIXED_AMOUNT.
+  /// MANUAL is a valid SellingPriceRuleType value but is never stored here
+  /// — a manual price is a per-line-item override, not a reusable rule;
+  /// see QuoteLineItem.sellingPriceMethod / sellingPriceReason.
+  ruleType SellingPriceRuleType
+
+  /// Selling price = cost x (multiplierBps / 10000). Set only when ruleType = MULTIPLIER.
+  multiplierBps Int?
+  /// Selling price = cost x (1 + markupPercentBps / 10000). Set only when ruleType = MARKUP_PERCENT.
+  markupPercentBps Int?
+  /// Selling price = cost / (1 - targetMarginBps / 10000). Set only when ruleType = TARGET_MARGIN.
+  targetMarginBps Int?
+  /// Selling price = fixedAmountCents, regardless of cost. Set only when ruleType = FIXED_AMOUNT.
+  fixedAmountCents Int?
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appliedToLineItems QuoteLineItem[]
+
+  @@map("selling_price_rules")
+}
+
+/// Generic catalog of fixed-cost add-ons (e.g. a specific motorization kit,
+/// remote, hub, solar charger, or installation charge) for the FIXED_PRICE
+/// pricing strategy and COMPOSITE_PRICE line items. No rows exist until BT
+/// Home Designs supplies real, verified costs — see
+/// lib/pricing/costBreakdown.ts, which treats an unmatched add-on as
+/// NOT_CONFIGURED rather than assuming $0 or any other default.
+model FixedPriceOption {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  costCents Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("fixed_price_options")
 }
 
 // ---------------------------------------------------------------------------

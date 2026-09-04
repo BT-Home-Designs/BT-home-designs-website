@@ -4,6 +4,8 @@ import { requireInternalUser } from "@/lib/auth/requireInternalUser";
 import { getQuoteWithDetails } from "@/lib/quotes/quotes";
 import { prisma } from "@/lib/db/prisma";
 import { toLineItemDTO } from "@/lib/quotes/dto";
+import { getKnownAddOnCostsCents } from "@/lib/quotes/fixedPriceOptions";
+import { calculateQuoteTotals } from "@/lib/quotes/totals";
 import { QuoteEditor } from "@/components/internal/quotes/QuoteEditor";
 import type { QuoteHeaderDefaults } from "@/components/internal/quotes/QuoteHeaderForm";
 
@@ -29,11 +31,26 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ id
   const quote = await getQuoteWithDetails(id);
   if (!quote) notFound();
 
-  const [products, fabrics, colors] = await Promise.all([
+  const [products, fabrics, colors, knownAddOnCostsCents] = await Promise.all([
     prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     prisma.fabric.findMany({ where: { active: true }, orderBy: { sourceName: "asc" } }),
     prisma.color.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    getKnownAddOnCostsCents(),
   ]);
+
+  const lineItems = quote.lineItems.map((li) => toLineItemDTO(li, knownAddOnCostsCents));
+
+  const configuredSellingPrices = lineItems.filter((li) => li.sellingPriceStatus === "SET").map((li) => li.sellingPriceCents!);
+  const unconfiguredCount = lineItems.length - configuredSellingPrices.length;
+  const totals = calculateQuoteTotals({
+    lineItemSellingPricesCents: configuredSellingPrices,
+    discountType: quote.discountType,
+    discountValue: quote.discountValue,
+    taxRateBps: quote.taxRateBps,
+    depositType: quote.depositType,
+    depositValue: quote.depositValue,
+    depositPaidCents: quote.depositPaidCents,
+  });
 
   const headerDefaults: QuoteHeaderDefaults = {
     quoteNumber: quote.quoteNumber,
@@ -58,10 +75,12 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ id
       <QuoteEditor
         quoteId={quote.id}
         headerDefaults={headerDefaults}
-        initialLineItems={quote.lineItems.map(toLineItemDTO)}
+        initialLineItems={lineItems}
         products={products.map((p) => ({ id: p.id, name: p.name, productType: p.productType }))}
         fabrics={fabrics.map((f) => ({ id: f.id, sourceName: f.sourceName, productId: f.productId }))}
         colors={colors.map((c) => ({ id: c.id, name: c.name, fabricId: c.fabricId }))}
+        totals={totals}
+        unconfiguredSellingPriceCount={unconfiguredCount}
       />
     </div>
   );

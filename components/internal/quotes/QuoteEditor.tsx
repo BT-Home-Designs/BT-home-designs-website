@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import type { LineItemDTO } from "@/lib/quotes/dto";
+import type { QuoteTotalsResult } from "@/lib/quotes/totals";
 import { LineItemCard, type ProductOption, type FabricOption, type ColorOption } from "./LineItemCard";
 import { QuoteHeaderForm, type QuoteHeaderDefaults } from "./QuoteHeaderForm";
+import { QuoteTotalsSummary } from "./QuoteTotalsSummary";
 import { addLineItemAction, updateQuoteHeaderAction } from "@/app/internal/(dashboard)/quotes/[id]/actions";
 
 export function QuoteEditor({
@@ -13,6 +15,8 @@ export function QuoteEditor({
   products,
   fabrics,
   colors,
+  totals,
+  unconfiguredSellingPriceCount,
 }: {
   quoteId: string;
   headerDefaults: QuoteHeaderDefaults;
@@ -20,6 +24,8 @@ export function QuoteEditor({
   products: ProductOption[];
   fabrics: FabricOption[];
   colors: ColorOption[];
+  totals: QuoteTotalsResult;
+  unconfiguredSellingPriceCount: number;
 }) {
   const [lineItems, setLineItems] = useState<LineItemDTO[]>(initialLineItems);
   const [isAdding, startAddTransition] = useTransition();
@@ -100,6 +106,8 @@ export function QuoteEditor({
           )}
         </div>
       </div>
+
+      {lineItems.length > 0 && <QuoteTotalsSummary totals={totals} unconfiguredCount={unconfiguredSellingPriceCount} />}
     </div>
   );
 }

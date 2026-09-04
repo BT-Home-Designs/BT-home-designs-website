@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import type { LineItemDTO } from "@/lib/quotes/dto";
 import { isMatrixSupportedProductType } from "@/lib/quotes/matrixSupportedProductTypes";
 import { PricingPanel } from "./PricingPanel";
+import { CustomerPricePanel } from "./CustomerPricePanel";
 import {
   updateLineItemAction,
   duplicateLineItemAction,
@@ -294,12 +295,9 @@ export function LineItemCard({
         {expanded ? "Hide options" : "More options (mount, control, motorization, remote, hub, solar charger, installation, notes)"}
       </button>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
-        <PricingPanel productType={selectedProduct?.productType ?? null} snapshot={item.currentSnapshot} />
-        <div className="text-[11px] text-charcoal-soft sm:text-right">
-          <p className="font-medium uppercase tracking-wide">Selling Price</p>
-          <p>{item.sellingPriceStatus === "NOT_CONFIGURED" ? "NOT CONFIGURED" : `$${((item.sellingPriceCents ?? 0) / 100).toFixed(2)}`}</p>
-        </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 sm:items-start">
+        <PricingPanel productType={selectedProduct?.productType ?? null} snapshot={item.currentSnapshot} costBreakdown={item.costBreakdown} />
+        <CustomerPricePanel item={item} quoteId={quoteId} onSaved={onSaved} />
       </div>
 
       <div className="mt-3 flex items-center justify-between">
