@@ -45,6 +45,14 @@ function parseOptionalNumber(formData: FormData, key: string): number | null {
   return Number.isFinite(parsed) ? parsed : NaN; // NaN is intentionally preserved, not nulled — see INVALID_DIMENSIONS.
 }
 
+/** A non-negative whole count (e.g. arch panels, door cutouts). Empty -> null, invalid/negative -> 0. */
+function parseOptionalCount(formData: FormData, key: string): number | null {
+  const value = formData.get(key);
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0;
+}
+
 function parseLineItemForm(formData: FormData): LineItemFieldsInput {
   const hardwareOptionsRaw = formData.get("hardwareOptions");
   const hardwareOptions =
@@ -65,6 +73,8 @@ function parseLineItemForm(formData: FormData): LineItemFieldsInput {
     width: parseOptionalNumber(formData, "width"),
     height: parseOptionalNumber(formData, "height"),
     quantity,
+    archPanelCount: parseOptionalCount(formData, "archPanelCount"),
+    doorCutoutCount: parseOptionalCount(formData, "doorCutoutCount"),
     fabricId: getOptional(formData, "fabricId"),
     colorId: getOptional(formData, "colorId"),
     mountType: getOptional(formData, "mountType"),

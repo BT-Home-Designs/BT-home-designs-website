@@ -34,8 +34,8 @@ model InternalUser {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  quotesCreated       Quote[]         @relation("QuoteCreatedBy")
-  sellingPricesSet    QuoteLineItem[] @relation("SellingPriceSetBy")
+  quotesCreated    Quote[]         @relation("QuoteCreatedBy")
+  sellingPricesSet QuoteLineItem[] @relation("SellingPriceSetBy")
 
   @@map("internal_users")
 }
@@ -135,6 +135,23 @@ enum SellingPriceRuleType {
   TARGET_MARGIN
   FIXED_AMOUNT
   MANUAL
+  /// Computed directly by a SquareFootPricingRule (width x height / 144 x
+  /// rate, plus arch/cutout charges) — there is no "cost" input to apply a
+  /// multiplier/markup/margin to, so this is its own method rather than
+  /// reusing one of the four cost-based types above.
+  SQUARE_FOOT_FORMULA
+}
+
+/// Lifecycle for a configurable business-pricing record (a FixedPriceOption,
+/// SquareFootPricingRule, etc.). PENDING_VERIFICATION means the number is
+/// known/remembered but not yet confirmed as final — such a record must
+/// never be picked up by an automatic pricing calculation, only ACTIVE
+/// records are. INACTIVE is a deliberately retired record (e.g. superseded
+/// by a new price) kept around for historical/audit reference.
+enum BusinessPricingStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_VERIFICATION
 }
 
 // ---------------------------------------------------------------------------
@@ -180,7 +197,7 @@ model Quote {
   /// Quote-level discount only in Phase 3. Line-item discounts are a later
   /// phase (see AGENTS.md / project history) — this schema doesn't block
   /// adding a parallel discount on QuoteLineItem when that's approved.
-  discountType DiscountType?
+  discountType  DiscountType?
   /// Meaning depends on discountType: basis points (e.g. 1000 = 10.00%) when
   /// PERCENTAGE, cents when FIXED_AMOUNT. Null when discountType is null.
   discountValue Int?
@@ -190,11 +207,11 @@ model Quote {
   /// business's default rate changes later.
   taxRateBps Int @default(0)
 
-  depositType DepositType?
+  depositType      DepositType?
   /// Meaning depends on depositType: basis points when PERCENTAGE, cents
   /// when FIXED_AMOUNT. Null when depositType is null.
   depositValue     Int?
-  depositPaidCents Int  @default(0)
+  depositPaidCents Int          @default(0)
 
   createdById String?
   createdBy   InternalUser? @relation("QuoteCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -224,7 +241,7 @@ model QuoteLineItem {
   product   Product? @relation(fields: [productId], references: [id])
 
   vendorId String?
-  vendor   Vendor?  @relation(fields: [vendorId], references: [id])
+  vendor   Vendor? @relation(fields: [vendorId], references: [id])
 
   /// Actual entered dimensions, in inches. Decimal (not float) so the
   /// pricing engine's breakpoint comparisons (e.g. 36 vs 36.001) are never
@@ -234,18 +251,24 @@ model QuoteLineItem {
 
   quantity Int @default(1)
 
+  /// Plantation Shutter specific — ignored (should stay null) for every
+  /// other product type. Not "forced" onto Roller Shade / Neolux items,
+  /// which use fabricId/colorId below instead.
+  archPanelCount  Int?
+  doorCutoutCount Int?
+
   fabricId String?
   fabric   Fabric? @relation(fields: [fabricId], references: [id])
 
   colorId String?
   color   Color?  @relation(fields: [colorId], references: [id])
 
-  mountType     String?
-  controlType   String?
-  motorization  String?
-  remote        String?
-  hub           String?
-  solarCharger  String?
+  mountType       String?
+  controlType     String?
+  motorization    String?
+  remote          String?
+  hub             String?
+  solarCharger    String?
   /// Free-form hardware/option tags (e.g. "Fascia", "Cassette Valance").
   /// Not every product uses this — empty by default.
   hardwareOptions String[] @default([])
@@ -301,6 +324,13 @@ model QuoteLineItem {
   currentPricingSnapshotId String?          @unique
   currentPricingSnapshot   PricingSnapshot? @relation("LineItemCurrentSnapshot", fields: [currentPricingSnapshotId], references: [id])
 
+  /// Same append-only-history + current-pointer pattern as
+  /// currentPricingSnapshot above, for Plantation Shutter (SQUARE_FOOT)
+  /// pricing instead of matrix pricing — see SquareFootPriceSnapshot.
+  squareFootSnapshots         SquareFootPriceSnapshot[] @relation("LineItemSquareFootSnapshotHistory")
+  currentSquareFootSnapshotId String?                   @unique
+  currentSquareFootSnapshot   SquareFootPriceSnapshot?  @relation("LineItemCurrentSquareFootSnapshot", fields: [currentSquareFootSnapshotId], references: [id])
+
   @@map("quote_line_items")
 }
 
@@ -323,8 +353,8 @@ model Vendor {
 }
 
 model Product {
-  id     String      @id @default(cuid())
-  name   String
+  id          String      @id @default(cuid())
+  name        String
   productType ProductType
 
   vendorId String
@@ -336,10 +366,11 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  fabrics          Fabric[]
-  colors           Color[]
-  quoteLineItems   QuoteLineItem[]
-  sellingPriceRule SellingPriceRule?
+  fabrics               Fabric[]
+  colors                Color[]
+  quoteLineItems        QuoteLineItem[]
+  sellingPriceRule      SellingPriceRule?
+  squareFootPricingRule SquareFootPricingRule?
 
   @@map("products")
 }
@@ -431,11 +462,11 @@ model SellingPriceRule {
   ruleType SellingPriceRuleType
 
   /// Selling price = cost x (multiplierBps / 10000). Set only when ruleType = MULTIPLIER.
-  multiplierBps Int?
+  multiplierBps    Int?
   /// Selling price = cost x (1 + markupPercentBps / 10000). Set only when ruleType = MARKUP_PERCENT.
   markupPercentBps Int?
   /// Selling price = cost / (1 - targetMarginBps / 10000). Set only when ruleType = TARGET_MARGIN.
-  targetMarginBps Int?
+  targetMarginBps  Int?
   /// Selling price = fixedAmountCents, regardless of cost. Set only when ruleType = FIXED_AMOUNT.
   fixedAmountCents Int?
 
@@ -450,19 +481,72 @@ model SellingPriceRule {
 
 /// Generic catalog of fixed-cost add-ons (e.g. a specific motorization kit,
 /// remote, hub, solar charger, or installation charge) for the FIXED_PRICE
-/// pricing strategy and COMPOSITE_PRICE line items. No rows exist until BT
-/// Home Designs supplies real, verified costs — see
-/// lib/pricing/costBreakdown.ts, which treats an unmatched add-on as
-/// NOT_CONFIGURED rather than assuming $0 or any other default.
+/// pricing strategy and COMPOSITE_PRICE line items.
+///
+/// Only `status: ACTIVE` options are ever picked up by an automatic
+/// calculation (see lib/quotes/fixedPriceOptions.ts) — this is the
+/// mechanism that keeps a PENDING_VERIFICATION price (e.g. an amount
+/// previously described only as "approximate") from being silently
+/// applied to a real quote. Editing costCents on an existing row only
+/// affects future calculations: a line item already priced keeps its
+/// frozen historical amount (see PricingSnapshot / SquareFootPriceSnapshot
+/// for matrix/shutter pricing, and QuoteLineItem.sellingPriceCents for
+/// selling price) — nothing here recomputes an old quote.
 model FixedPriceOption {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id        String                @id @default(cuid())
+  name      String                @unique
+  /// Free-form grouping for the UI to filter relevant options by field
+  /// (e.g. "MOTORIZATION", "REMOTE", "SOLAR_CHARGER", "HUB",
+  /// "INSTALLATION_BASE", "INSTALLATION_ADDON") — not a fixed enum, since
+  /// new categories may be added later without a schema change.
+  category  String
   costCents Int
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    BusinessPricingStatus @default(ACTIVE)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
 
   @@map("fixed_price_options")
+}
+
+/// Configures Plantation-Shutter-style square-foot customer pricing for one
+/// Product: base = (width x height / 144) x ratePerSquareFootCents, plus a
+/// flat charge per arch panel and per door cutout. Scoped to a single
+/// product (not shared across product types) since a different SQUARE_FOOT
+/// product later may have entirely different approved numbers. Only
+/// `status: ACTIVE` rules are used by lib/quotes/shutterPricing.ts.
+model SquareFootPricingRule {
+  id String @id @default(cuid())
+
+  productId String  @unique
+  product   Product @relation(fields: [productId], references: [id])
+
+  ratePerSquareFootCents Int
+  archChargeCents        Int @default(0)
+  doorCutoutChargeCents  Int @default(0)
+
+  status    BusinessPricingStatus @default(ACTIVE)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@map("square_foot_pricing_rules")
+}
+
+/// Installer minimum trip charge for a job under a configured shade count.
+/// Seeded with BT Home Designs' approved numbers ($125 / under 5 shades)
+/// but kept at PENDING_VERIFICATION — not INACTIVE, since the dollar
+/// amount and shade-count threshold ARE approved — because how it
+/// interacts with per-shade installation labor (replace vs. supplement)
+/// is an open business decision. No code applies this rule to a quote
+/// while it is not ACTIVE; see lib/quotes/installationPricing.ts.
+model InstallationTripMinimumRule {
+  id                       String                @id @default(cuid())
+  minimumChargeCents       Int
+  qualifiesUnderShadeCount Int
+  status                   BusinessPricingStatus @default(PENDING_VERIFICATION)
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+
+  @@map("installation_trip_minimum_rules")
 }
 
 // ---------------------------------------------------------------------------
@@ -524,4 +608,58 @@ model PricingSnapshot {
   createdAt DateTime @default(now())
 
   @@map("pricing_snapshots")
+}
+
+/// Immutable, append-only record of one SQUARE_FOOT (Plantation Shutter)
+/// customer-price calculation — the SquareFootPricingRule equivalent of
+/// PricingSnapshot. Every applied rate/charge is frozen here at calculation
+/// time, NOT read live from SquareFootPricingRule, so editing that rule's
+/// costCents later never changes a quote that already has a snapshot.
+/// "The current price" is whichever row QuoteLineItem.currentSquareFootSnapshotId
+/// points at — never simply the newest row (a config becoming INACTIVE, or
+/// a dimension change, can make pricing unavailable without deleting history).
+model SquareFootPriceSnapshot {
+  id String @id @default(cuid())
+
+  quoteLineItemId String
+  quoteLineItem   QuoteLineItem @relation("LineItemSquareFootSnapshotHistory", fields: [quoteLineItemId], references: [id], onDelete: Cascade)
+
+  /// Back-reference for QuoteLineItem.currentSquareFootSnapshot.
+  currentForLineItem QuoteLineItem? @relation("LineItemCurrentSquareFootSnapshot")
+
+  /// Mirrors PricingStatus's fail-closed shape: SUCCESS is the only status
+  /// with non-null price fields. CONFIGURATION_ERROR covers a missing/
+  /// inactive SquareFootPricingRule; INVALID_DIMENSIONS mirrors the matrix
+  /// engine's own validation (0/negative/NaN/Infinity).
+  status PricingStatus
+
+  /// Entered dimensions, preserved even on failure (same rationale as
+  /// PricingSnapshot.actualWidth/actualHeight).
+  actualWidth     Decimal? @db.Decimal(7, 3)
+  actualHeight    Decimal? @db.Decimal(7, 3)
+  archPanelCount  Int?
+  doorCutoutCount Int?
+  quantity        Int
+
+  /// Frozen inputs from SquareFootPricingRule at calculation time — never
+  /// re-read live from that (editable) row afterward.
+  appliedRatePerSquareFootCents Int?
+  appliedArchChargeCents        Int?
+  appliedDoorCutoutChargeCents  Int?
+
+  /// Exact square footage used (width x height / 144, NOT rounded before
+  /// this division) — kept for audit even though only the cents amounts
+  /// below are used for money math.
+  squareFeet Decimal? @db.Decimal(12, 6)
+
+  perUnitBaseCents           Int?
+  archChargeTotalCents       Int?
+  doorCutoutChargeTotalCents Int?
+  /// (base + arch + cutout) x quantity — the actual customer selling-price
+  /// contribution of this line item when status is SUCCESS.
+  totalCents                 Int?
+
+  createdAt DateTime @default(now())
+
+  @@map("square_foot_price_snapshots")
 }

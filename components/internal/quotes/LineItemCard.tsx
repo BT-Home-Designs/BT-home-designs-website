@@ -3,7 +3,9 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import type { LineItemDTO } from "@/lib/quotes/dto";
 import { isMatrixSupportedProductType } from "@/lib/quotes/matrixSupportedProductTypes";
+import { isShutterSupportedProductType } from "@/lib/quotes/shutterSupportedProductTypes";
 import { PricingPanel } from "./PricingPanel";
+import { ShutterPricingPanel } from "./ShutterPricingPanel";
 import { CustomerPricePanel } from "./CustomerPricePanel";
 import {
   updateLineItemAction,
@@ -30,6 +32,15 @@ export interface ColorOption {
   fabricId: string | null;
 }
 
+/** One row from the FixedPriceOption catalog — see prisma/schema.prisma. */
+export interface FixedPriceOptionOption {
+  id: string;
+  name: string;
+  category: string;
+  costCents: number;
+  status: string;
+}
+
 const inputClass =
   "w-full rounded-sm border border-charcoal/20 bg-warm-white px-2.5 py-1.5 text-[13px] text-charcoal outline-none transition-colors focus:border-oak-dark";
 const labelClass = "mb-1 block text-[11px] font-medium text-charcoal-soft";
@@ -43,6 +54,185 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/**
+ * A dropdown backed by the FixedPriceOption catalog for one category (e.g.
+ * "MOTORIZATION") — never a hard-coded list of names/prices. A
+ * PENDING_VERIFICATION or INACTIVE option still appears (so staff can see
+ * it exists) but is clearly labeled so nobody mistakes it for a live price.
+ */
+function FixedPriceOptionSelect({
+  name,
+  defaultValue,
+  options,
+  emptyLabel,
+}: {
+  name: string;
+  defaultValue: string;
+  options: FixedPriceOptionOption[];
+  emptyLabel: string;
+}) {
+  return (
+    <select name={name} defaultValue={defaultValue} className={inputClass}>
+      <option value="">{emptyLabel}</option>
+      {options.map((option) => (
+        <option key={option.id} value={option.name}>
+          {option.name} — {(option.costCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+          {option.status !== "ACTIVE" ? ` (${option.status.replace("_", " ")} — not applied to pricing yet)` : ""}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ShutterFields({ item }: { item: LineItemDTO }) {
+  return (
+    <>
+      <Field label="Width (in) *">
+        <input name="width" type="number" step="0.001" defaultValue={item.width ?? ""} className={inputClass} />
+      </Field>
+      <Field label="Height (in) *">
+        <input name="height" type="number" step="0.001" defaultValue={item.height ?? ""} className={inputClass} />
+      </Field>
+      <Field label="Quantity">
+        <input name="quantity" type="number" min={1} step={1} defaultValue={item.quantity} className={inputClass} />
+      </Field>
+      <Field label="Arch Panel Count">
+        <input name="archPanelCount" type="number" min={0} step={1} defaultValue={item.archPanelCount ?? ""} className={inputClass} />
+      </Field>
+      <Field label="Door Cutout Count">
+        <input name="doorCutoutCount" type="number" min={0} step={1} defaultValue={item.doorCutoutCount ?? ""} className={inputClass} />
+      </Field>
+      <div className="col-span-2 sm:col-span-3">
+        <Field label="Notes">
+          <textarea name="notes" defaultValue={item.notes ?? ""} rows={2} className={inputClass} />
+        </Field>
+      </div>
+    </>
+  );
+}
+
+function MatrixFields({
+  item,
+  productId,
+  fabricId,
+  fabricsForProduct,
+  colorsForFabric,
+  onFabricChange,
+  motorizationOptions,
+  remoteOptions,
+  hubOptions,
+  solarChargerOptions,
+  expanded,
+  onToggleExpanded,
+}: {
+  item: LineItemDTO;
+  productId: string;
+  fabricId: string;
+  fabricsForProduct: FabricOption[];
+  colorsForFabric: ColorOption[];
+  onFabricChange: (id: string) => void;
+  motorizationOptions: FixedPriceOptionOption[];
+  remoteOptions: FixedPriceOptionOption[];
+  hubOptions: FixedPriceOptionOption[];
+  solarChargerOptions: FixedPriceOptionOption[];
+  expanded: boolean;
+  onToggleExpanded: () => void;
+}) {
+  return (
+    <>
+      <Field label="Fabric">
+        <select
+          name="fabricId"
+          value={fabricId}
+          onChange={(e) => onFabricChange(e.target.value)}
+          disabled={!productId}
+          className={inputClass}
+        >
+          <option value="">{productId ? "Select fabric…" : "Select a product first"}</option>
+          {fabricsForProduct.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.sourceName}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="Width (in) *">
+        <input name="width" type="number" step="0.001" defaultValue={item.width ?? ""} className={inputClass} />
+      </Field>
+      <Field label="Height (in) *">
+        <input name="height" type="number" step="0.001" defaultValue={item.height ?? ""} className={inputClass} />
+      </Field>
+      <Field label="Quantity">
+        <input name="quantity" type="number" min={1} step={1} defaultValue={item.quantity} className={inputClass} />
+      </Field>
+      <Field label="Color">
+        <select name="colorId" defaultValue={item.colorId ?? ""} disabled={colorsForFabric.length === 0} className={inputClass}>
+          <option value="">{colorsForFabric.length === 0 ? "No colors available yet" : "Select color…"}</option>
+          {colorsForFabric.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      {expanded && (
+        <>
+          <Field label="Mount Type">
+            <input name="mountType" defaultValue={item.mountType ?? ""} className={inputClass} />
+          </Field>
+          <Field label="Control Type">
+            <input name="controlType" defaultValue={item.controlType ?? ""} placeholder="e.g. Cordless" className={inputClass} />
+          </Field>
+          <Field label="Motorization">
+            <FixedPriceOptionSelect
+              name="motorization"
+              defaultValue={item.motorization ?? ""}
+              options={motorizationOptions}
+              emptyLabel="None"
+            />
+          </Field>
+          <Field label="Remote">
+            <FixedPriceOptionSelect name="remote" defaultValue={item.remote ?? ""} options={remoteOptions} emptyLabel="None" />
+          </Field>
+          <Field label="Hub">
+            <FixedPriceOptionSelect name="hub" defaultValue={item.hub ?? ""} options={hubOptions} emptyLabel="None" />
+          </Field>
+          <Field label="Solar Charger">
+            <FixedPriceOptionSelect
+              name="solarCharger"
+              defaultValue={item.solarCharger ?? ""}
+              options={solarChargerOptions}
+              emptyLabel="None"
+            />
+          </Field>
+          <Field label="Installation">
+            <select name="installation" defaultValue={item.installation ?? ""} className={inputClass}>
+              <option value="">Not included</option>
+              <option value="Installation">Include installation</option>
+            </select>
+          </Field>
+          <div className="col-span-2 sm:col-span-3">
+            <Field label="Hardware / Options (comma-separated)">
+              <input name="hardwareOptions" defaultValue={item.hardwareOptions.join(", ")} className={inputClass} />
+            </Field>
+          </div>
+          <div className="col-span-2 sm:col-span-3">
+            <Field label="Notes">
+              <textarea name="notes" defaultValue={item.notes ?? ""} rows={2} className={inputClass} />
+            </Field>
+          </div>
+        </>
+      )}
+      <div className="col-span-2 flex items-end sm:col-span-4 lg:col-span-6">
+        <button type="button" onClick={onToggleExpanded} className="text-[11px] font-medium text-oak-dark hover:underline">
+          {expanded ? "Hide options" : "More options (mount, control, motorization, remote, hub, solar charger, installation, notes)"}
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function LineItemCard({
   item,
   quoteId,
@@ -52,6 +242,7 @@ export function LineItemCard({
   products,
   fabrics,
   colors,
+  fixedPriceOptions,
   onSaved,
   onDeleted,
   onDuplicated,
@@ -65,6 +256,7 @@ export function LineItemCard({
   products: ProductOption[];
   fabrics: FabricOption[];
   colors: ColorOption[];
+  fixedPriceOptions: FixedPriceOptionOption[];
   onSaved: (updated: LineItemDTO) => void;
   onDeleted: (id: string) => void;
   onDuplicated: (all: LineItemDTO[]) => void;
@@ -81,6 +273,15 @@ export function LineItemCard({
   const selectedProduct = products.find((p) => p.id === productId) ?? null;
   const fabricsForProduct = useMemo(() => fabrics.filter((f) => f.productId === productId), [fabrics, productId]);
   const colorsForFabric = useMemo(() => colors.filter((c) => c.fabricId === fabricId), [colors, fabricId]);
+  const optionsByCategory = useMemo(() => {
+    const map = new Map<string, FixedPriceOptionOption[]>();
+    for (const option of fixedPriceOptions) {
+      const list = map.get(option.category) ?? [];
+      list.push(option);
+      map.set(option.category, list);
+    }
+    return map;
+  }, [fixedPriceOptions]);
 
   function handleProductChange(newProductId: string) {
     setProductId(newProductId);
@@ -141,6 +342,7 @@ export function LineItemCard({
   }
 
   const isMatrixProduct = isMatrixSupportedProductType(selectedProduct?.productType);
+  const isShutterProduct = isShutterSupportedProductType(selectedProduct?.productType);
 
   return (
     <div className="rounded-sm border border-charcoal/15 bg-warm-white p-4">
@@ -214,89 +416,50 @@ export function LineItemCard({
             ))}
           </select>
         </Field>
-        <Field label="Fabric">
-          <select
-            name="fabricId"
-            value={fabricId}
-            onChange={(e) => setFabricId(e.target.value)}
-            disabled={!productId}
-            className={inputClass}
-          >
-            <option value="">{productId ? "Select fabric…" : "Select a product first"}</option>
-            {fabricsForProduct.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.sourceName}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label={`Width (in)${isMatrixProduct ? " *" : ""}`}>
-          <input name="width" type="number" step="0.001" defaultValue={item.width ?? ""} className={inputClass} />
-        </Field>
-        <Field label={`Height (in)${isMatrixProduct ? " *" : ""}`}>
-          <input name="height" type="number" step="0.001" defaultValue={item.height ?? ""} className={inputClass} />
-        </Field>
-        <Field label="Quantity">
-          <input name="quantity" type="number" min={1} step={1} defaultValue={item.quantity} className={inputClass} />
-        </Field>
-        <Field label="Color">
-          <select name="colorId" defaultValue={item.colorId ?? ""} disabled={colorsForFabric.length === 0} className={inputClass}>
-            <option value="">{colorsForFabric.length === 0 ? "No colors available yet" : "Select color…"}</option>
-            {colorsForFabric.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </Field>
 
-        {expanded && (
-          <>
-            <Field label="Mount Type">
-              <input name="mountType" defaultValue={item.mountType ?? ""} className={inputClass} />
+        {/* Product Type drives which fields render below — Roller/Neolux keep
+            the fabric/matrix workflow, Plantation Shutter gets its own
+            dimension/arch/cutout fields, and anything else stays minimal. */}
+        {isMatrixProduct && (
+          <MatrixFields
+            item={item}
+            productId={productId}
+            fabricId={fabricId}
+            fabricsForProduct={fabricsForProduct}
+            colorsForFabric={colorsForFabric}
+            onFabricChange={setFabricId}
+            motorizationOptions={optionsByCategory.get("MOTORIZATION") ?? []}
+            remoteOptions={optionsByCategory.get("REMOTE") ?? []}
+            hubOptions={optionsByCategory.get("HUB") ?? []}
+            solarChargerOptions={optionsByCategory.get("SOLAR_CHARGER") ?? []}
+            expanded={expanded}
+            onToggleExpanded={() => setExpanded((v) => !v)}
+          />
+        )}
+
+        {isShutterProduct && <ShutterFields item={item} />}
+
+        {!isMatrixProduct && !isShutterProduct && (
+          <div className="col-span-2 sm:col-span-3">
+            <Field label="Notes">
+              <textarea name="notes" defaultValue={item.notes ?? ""} rows={2} className={inputClass} />
             </Field>
-            <Field label="Control Type">
-              <input name="controlType" defaultValue={item.controlType ?? ""} className={inputClass} />
-            </Field>
-            <Field label="Motorization">
-              <input name="motorization" defaultValue={item.motorization ?? ""} className={inputClass} />
-            </Field>
-            <Field label="Remote">
-              <input name="remote" defaultValue={item.remote ?? ""} className={inputClass} />
-            </Field>
-            <Field label="Hub">
-              <input name="hub" defaultValue={item.hub ?? ""} className={inputClass} />
-            </Field>
-            <Field label="Solar Charger">
-              <input name="solarCharger" defaultValue={item.solarCharger ?? ""} className={inputClass} />
-            </Field>
-            <Field label="Installation">
-              <input name="installation" defaultValue={item.installation ?? ""} className={inputClass} />
-            </Field>
-            <div className="col-span-2 sm:col-span-3">
-              <Field label="Hardware / Options (comma-separated)">
-                <input name="hardwareOptions" defaultValue={item.hardwareOptions.join(", ")} className={inputClass} />
-              </Field>
-            </div>
-            <div className="col-span-2 sm:col-span-3">
-              <Field label="Notes">
-                <textarea name="notes" defaultValue={item.notes ?? ""} rows={2} className={inputClass} />
-              </Field>
-            </div>
-          </>
+          </div>
         )}
       </form>
 
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="mt-2 text-[11px] font-medium text-oak-dark hover:underline"
-      >
-        {expanded ? "Hide options" : "More options (mount, control, motorization, remote, hub, solar charger, installation, notes)"}
-      </button>
+      {!isMatrixProduct && !isShutterProduct && productId && (
+        <p className="mt-2 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+          This product type has no approved pricing rule yet — pricing stays MANUAL / NOT CONFIGURED.
+        </p>
+      )}
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 sm:items-start">
-        <PricingPanel productType={selectedProduct?.productType ?? null} snapshot={item.currentSnapshot} costBreakdown={item.costBreakdown} />
+        {isShutterProduct ? (
+          <ShutterPricingPanel snapshot={item.currentShutterSnapshot} />
+        ) : (
+          <PricingPanel productType={selectedProduct?.productType ?? null} snapshot={item.currentSnapshot} costBreakdown={item.costBreakdown} />
+        )}
         <CustomerPricePanel item={item} quoteId={quoteId} onSaved={onSaved} />
       </div>
 

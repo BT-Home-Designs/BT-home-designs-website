@@ -25,7 +25,7 @@ export async function resolveSellingPriceRuleForProduct(productId: string | null
   return null;
 }
 
-const NOT_CONFIGURED_UPDATE = {
+export const NOT_CONFIGURED_UPDATE = {
   sellingPriceStatus: "NOT_CONFIGURED" as const,
   sellingPriceCents: null,
   sellingPriceMethod: null,
@@ -39,10 +39,14 @@ const NOT_CONFIGURED_UPDATE = {
  * Applies an automatic SellingPriceRule to a line item's selling price if
  * (and only if) one resolves for its product — using the line item's
  * current dealer cost (from its currentPricingSnapshot, only when that
- * snapshot is a SUCCESS) as the cost basis. Never invoked for MANUAL: an
- * item whose sellingPriceMethod is already MANUAL is left untouched, so
- * an automatic reprice pass can never silently overwrite a manual entry
- * (see setManualSellingPrice below).
+ * snapshot is a SUCCESS) as the cost basis.
+ *
+ * Skipped entirely (line item left untouched) when sellingPriceMethod is
+ * already MANUAL (a staff override — see setManualSellingPrice below) or
+ * SQUARE_FOOT_FORMULA (set directly by lib/quotes/shutterPricing.ts,
+ * which has its own cost-free formula; this function would otherwise
+ * "correct" it back to NOT_CONFIGURED the moment it finds no
+ * SellingPriceRule for a shutter product, since shutters don't use one).
  *
  * If no rule resolves (today: always, since none exist) or the resolved
  * rule can't compute (e.g. cost unknown), the line item is explicitly
@@ -54,7 +58,7 @@ export async function applyAutomaticSellingPrice(lineItemId: string): Promise<vo
     include: { currentPricingSnapshot: true },
   });
 
-  if (lineItem.sellingPriceMethod === "MANUAL") return;
+  if (lineItem.sellingPriceMethod === "MANUAL" || lineItem.sellingPriceMethod === "SQUARE_FOOT_FORMULA") return;
 
   const rule = await resolveSellingPriceRuleForProduct(lineItem.productId);
   if (!rule) {

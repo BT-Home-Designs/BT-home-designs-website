@@ -1,4 +1,11 @@
-export type SellingPriceRuleType = "MULTIPLIER" | "MARKUP_PERCENT" | "TARGET_MARGIN" | "FIXED_AMOUNT" | "MANUAL";
+/**
+ * SQUARE_FOOT_FORMULA is a valid QuoteLineItem.sellingPriceMethod (see
+ * prisma/schema.prisma) but is never a real SellingPriceRule row — it's
+ * computed directly by lib/quotes/shutterPricing.ts, not by
+ * applySellingPriceRule below. Included here only so that type flows
+ * through cleanly; engine.ts rejects it the same way it rejects MANUAL.
+ */
+export type SellingPriceRuleType = "MULTIPLIER" | "MARKUP_PERCENT" | "TARGET_MARGIN" | "FIXED_AMOUNT" | "MANUAL" | "SQUARE_FOOT_FORMULA";
 
 /**
  * The 4 automatic rule shapes (mirrors the Prisma SellingPriceRule model).

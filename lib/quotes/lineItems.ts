@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { repriceLineItemIfNeeded } from "./pricing";
+import { repriceShutterLineItemIfNeeded } from "./shutterPricing";
 import { applyAutomaticSellingPrice } from "./sellingPrice";
 
 export interface LineItemFieldsInput {
@@ -9,6 +10,9 @@ export interface LineItemFieldsInput {
   width: number | null;
   height: number | null;
   quantity: number;
+  /** Plantation Shutter only — ignored for other product types. */
+  archPanelCount: number | null;
+  doorCutoutCount: number | null;
   fabricId: string | null;
   colorId: string | null;
   mountType: string | null;
@@ -70,6 +74,8 @@ export async function updateLineItem(id: string, input: LineItemFieldsInput) {
       width: input.width,
       height: input.height,
       quantity: input.quantity,
+      archPanelCount: input.archPanelCount,
+      doorCutoutCount: input.doorCutoutCount,
       fabricId: input.fabricId,
       colorId: input.colorId,
       mountType: cleanOptional(input.mountType),
@@ -85,15 +91,18 @@ export async function updateLineItem(id: string, input: LineItemFieldsInput) {
   });
 
   const repriceResult = await repriceLineItemIfNeeded(id);
-  // Re-evaluate the automatic selling price whenever cost may have
-  // changed — never touches an item whose price was set MANUAL.
+  const shutterRepriceResult = await repriceShutterLineItemIfNeeded(id);
+  // Re-evaluate the automatic (cost-based) selling price whenever cost may
+  // have changed — never touches an item whose price was set MANUAL or
+  // computed directly by the shutter formula (see applyAutomaticSellingPrice).
   await applyAutomaticSellingPrice(id);
 
-  // Both side effects above write further fields (currentPricingSnapshotId,
-  // sellingPrice*) on this row after the `update` call, so the caller
-  // needs one fresh read at the end rather than the pre-side-effects row.
+  // All side effects above write further fields (currentPricingSnapshotId,
+  // currentSquareFootSnapshotId, sellingPrice*) on this row after the
+  // `update` call, so the caller needs one fresh read at the end rather
+  // than the pre-side-effects row.
   const lineItem = await prisma.quoteLineItem.findUniqueOrThrow({ where: { id } });
-  return { lineItem, repriceResult };
+  return { lineItem, repriceResult, shutterRepriceResult };
 }
 
 /**
@@ -122,6 +131,8 @@ export async function duplicateLineItem(id: string) {
       width: original.width,
       height: original.height,
       quantity: original.quantity,
+      archPanelCount: original.archPanelCount,
+      doorCutoutCount: original.doorCutoutCount,
       fabricId: original.fabricId,
       colorId: original.colorId,
       mountType: original.mountType,
@@ -138,6 +149,7 @@ export async function duplicateLineItem(id: string) {
   });
 
   await repriceLineItemIfNeeded(copy.id);
+  await repriceShutterLineItemIfNeeded(copy.id);
   // The copy starts at NOT_CONFIGURED (schema default) — never inherits
   // the original's manual selling price. Apply an automatic rule if one
   // resolves for its product.

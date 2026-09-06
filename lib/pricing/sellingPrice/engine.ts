@@ -71,6 +71,9 @@ export function applySellingPriceRule(rule: SellingPriceRuleConfig, costCents: n
     case "MANUAL":
       return configurationError("MANUAL is not an automatic rule — set a manual selling price directly instead of applying a rule.");
 
+    case "SQUARE_FOOT_FORMULA":
+      return configurationError("SQUARE_FOOT_FORMULA is computed by the shutter pricing engine, not by applySellingPriceRule.");
+
     default: {
       const exhaustiveCheck: never = rule.ruleType;
       return configurationError(`Unknown selling price rule type: ${String(exhaustiveCheck)}`);

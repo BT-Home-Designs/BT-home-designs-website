@@ -15,6 +15,7 @@ const lineItemWithRelations = {
     fabric: true,
     color: true,
     currentPricingSnapshot: true,
+    currentSquareFootSnapshot: true,
     sellingPriceRule: true,
     sellingPriceSetBy: true,
   },
@@ -41,6 +42,32 @@ export interface PricingSnapshotDTO {
   createdAt: string;
 }
 
+/**
+ * Plantation Shutter square-foot pricing snapshot — mirrors PricingSnapshotDTO's
+ * role for the matrix engine (see lib/quotes/shutterPricing.ts). `status` of
+ * anything other than SUCCESS means the amount fields are null; there is
+ * never a dealer-cost field here, since shutter dealer cost is NOT_CONFIGURED
+ * (see AGENTS.md / project history, Phase 6).
+ */
+export interface SquareFootSnapshotDTO {
+  id: string;
+  status: string;
+  actualWidth: number | null;
+  actualHeight: number | null;
+  archPanelCount: number | null;
+  doorCutoutCount: number | null;
+  quantity: number;
+  appliedRatePerSquareFootCents: number | null;
+  appliedArchChargeCents: number | null;
+  appliedDoorCutoutChargeCents: number | null;
+  squareFeet: number | null;
+  perUnitBaseCents: number | null;
+  archChargeTotalCents: number | null;
+  doorCutoutChargeTotalCents: number | null;
+  totalCents: number | null;
+  createdAt: string;
+}
+
 export interface CostBreakdownDTO {
   baseDealerCostCents: number | null;
   addOns: AddOnCostLine[];
@@ -63,6 +90,8 @@ export interface LineItemDTO {
   width: number | null;
   height: number | null;
   quantity: number;
+  archPanelCount: number | null;
+  doorCutoutCount: number | null;
   fabricId: string | null;
   fabricName: string | null;
   colorId: string | null;
@@ -93,6 +122,14 @@ export interface LineItemDTO {
    */
   currentSnapshot: PricingSnapshotDTO | null;
 
+  /**
+   * Whatever QuoteLineItem.currentSquareFootSnapshotId points at — the
+   * Plantation Shutter analogue of `currentSnapshot`. Null for non-shutter
+   * products, or when shutter pricing was never attempted for the current
+   * inputs. Check `.status` to know whether it's a usable price.
+   */
+  currentShutterSnapshot: SquareFootSnapshotDTO | null;
+
   /** INTERNAL ONLY — never render outside an authenticated internal page. */
   costBreakdown: CostBreakdownDTO;
   /** INTERNAL ONLY — null whenever selling price or total cost is unavailable. */
@@ -120,14 +157,47 @@ function toPricingSnapshotDTO(snapshot: NonNullable<LineItemWithRelations["curre
   };
 }
 
-/** Each non-empty field becomes one requested add-on line in the cost breakdown. */
+function toSquareFootSnapshotDTO(snapshot: NonNullable<LineItemWithRelations["currentSquareFootSnapshot"]>): SquareFootSnapshotDTO {
+  return {
+    id: snapshot.id,
+    status: snapshot.status,
+    actualWidth: snapshot.actualWidth ? snapshot.actualWidth.toNumber() : null,
+    actualHeight: snapshot.actualHeight ? snapshot.actualHeight.toNumber() : null,
+    archPanelCount: snapshot.archPanelCount,
+    doorCutoutCount: snapshot.doorCutoutCount,
+    quantity: snapshot.quantity,
+    appliedRatePerSquareFootCents: snapshot.appliedRatePerSquareFootCents,
+    appliedArchChargeCents: snapshot.appliedArchChargeCents,
+    appliedDoorCutoutChargeCents: snapshot.appliedDoorCutoutChargeCents,
+    squareFeet: snapshot.squareFeet ? snapshot.squareFeet.toNumber() : null,
+    perUnitBaseCents: snapshot.perUnitBaseCents,
+    archChargeTotalCents: snapshot.archChargeTotalCents,
+    doorCutoutChargeTotalCents: snapshot.doorCutoutChargeTotalCents,
+    totalCents: snapshot.totalCents,
+    createdAt: snapshot.createdAt.toISOString(),
+  };
+}
+
+/**
+ * Each requested add-on becomes one line in the cost breakdown, matched
+ * against the FixedPriceOption catalog by exact name — motorization/remote/
+ * hub/solarCharger fields hold the selected option's own name directly (see
+ * the dropdowns in LineItemCard), so no bucket-label translation is needed.
+ * Installation is derived from `installation`/`motorization`/`controlType`
+ * rather than stored as separate booleans, so each qualifying charge is
+ * added exactly once — never double-charging base + add-on labor.
+ */
 function requestedAddOnNames(lineItem: LineItemWithRelations): string[] {
   const names: string[] = [];
-  if (lineItem.motorization) names.push("Motorization");
-  if (lineItem.remote) names.push("Remote");
-  if (lineItem.hub) names.push("Hub");
-  if (lineItem.solarCharger) names.push("Solar Charger");
-  if (lineItem.installation) names.push("Installation");
+  if (lineItem.motorization) names.push(lineItem.motorization);
+  if (lineItem.remote) names.push(lineItem.remote);
+  if (lineItem.hub) names.push(lineItem.hub);
+  if (lineItem.solarCharger) names.push(lineItem.solarCharger);
+  if (lineItem.installation) {
+    names.push("Base Installation");
+    if (lineItem.motorization) names.push("Motorized Installation Add-On");
+    if (lineItem.controlType?.toLowerCase().includes("cordless")) names.push("Cordless Installation Add-On");
+  }
   names.push(...lineItem.hardwareOptions);
   return names;
 }
@@ -135,11 +205,14 @@ function requestedAddOnNames(lineItem: LineItemWithRelations): string[] {
 /**
  * `knownAddOnCostsCents` comes from the FixedPriceOption catalog (see
  * prisma/schema.prisma) — fetched once per page load by the caller, not
- * queried per line item here. Empty until BT Home Designs supplies real
- * add-on costs, so every add-on resolves NOT_CONFIGURED for now.
+ * queried per line item here. Only ACTIVE options are included (see
+ * lib/quotes/fixedPriceOptions.ts), so a PENDING_VERIFICATION option (e.g.
+ * the roller-shade cordless upgrade) always resolves NOT_CONFIGURED here,
+ * never a fabricated amount.
  */
 export function toLineItemDTO(lineItem: LineItemWithRelations, knownAddOnCostsCents: ReadonlyMap<string, number> = new Map()): LineItemDTO {
   const currentSnapshot = lineItem.currentPricingSnapshot ? toPricingSnapshotDTO(lineItem.currentPricingSnapshot) : null;
+  const currentShutterSnapshot = lineItem.currentSquareFootSnapshot ? toSquareFootSnapshotDTO(lineItem.currentSquareFootSnapshot) : null;
 
   const costBreakdown = calculateCompositeCost({
     baseDealerCostCents: currentSnapshot?.pricingStatus === "SUCCESS" ? currentSnapshot.dealerCostCents : null,
@@ -163,6 +236,8 @@ export function toLineItemDTO(lineItem: LineItemWithRelations, knownAddOnCostsCe
     width: lineItem.width ? lineItem.width.toNumber() : null,
     height: lineItem.height ? lineItem.height.toNumber() : null,
     quantity: lineItem.quantity,
+    archPanelCount: lineItem.archPanelCount,
+    doorCutoutCount: lineItem.doorCutoutCount,
     fabricId: lineItem.fabricId,
     fabricName: lineItem.fabric?.sourceName ?? null,
     colorId: lineItem.colorId,
@@ -182,6 +257,7 @@ export function toLineItemDTO(lineItem: LineItemWithRelations, knownAddOnCostsCe
     sellingPriceSetAt: lineItem.sellingPriceSetAt ? lineItem.sellingPriceSetAt.toISOString() : null,
     sellingPriceReason: lineItem.sellingPriceReason,
     currentSnapshot,
+    currentShutterSnapshot,
     costBreakdown,
     profitability,
   };

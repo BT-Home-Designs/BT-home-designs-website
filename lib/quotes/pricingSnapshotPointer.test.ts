@@ -44,6 +44,8 @@ describe("currentPricingSnapshotId pointer", () => {
       width: null,
       height: null,
       quantity: 1,
+      archPanelCount: null,
+      doorCutoutCount: null,
       fabricId: null,
       colorId: null,
       mountType: null,

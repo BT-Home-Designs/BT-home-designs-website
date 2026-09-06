@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import type { LineItemDTO } from "@/lib/quotes/dto";
 import type { QuoteTotalsResult } from "@/lib/quotes/totals";
-import { LineItemCard, type ProductOption, type FabricOption, type ColorOption } from "./LineItemCard";
+import { LineItemCard, type ProductOption, type FabricOption, type ColorOption, type FixedPriceOptionOption } from "./LineItemCard";
 import { QuoteHeaderForm, type QuoteHeaderDefaults } from "./QuoteHeaderForm";
 import { QuoteTotalsSummary } from "./QuoteTotalsSummary";
 import { addLineItemAction, updateQuoteHeaderAction } from "@/app/internal/(dashboard)/quotes/[id]/actions";
@@ -15,6 +15,7 @@ export function QuoteEditor({
   products,
   fabrics,
   colors,
+  fixedPriceOptions,
   totals,
   unconfiguredSellingPriceCount,
 }: {
@@ -24,6 +25,7 @@ export function QuoteEditor({
   products: ProductOption[];
   fabrics: FabricOption[];
   colors: ColorOption[];
+  fixedPriceOptions: FixedPriceOptionOption[];
   totals: QuoteTotalsResult;
   unconfiguredSellingPriceCount: number;
 }) {
@@ -93,6 +95,7 @@ export function QuoteEditor({
               products={products}
               fabrics={fabrics}
               colors={colors}
+              fixedPriceOptions={fixedPriceOptions}
               onSaved={handleSaved}
               onDeleted={handleDeleted}
               onDuplicated={handleReplaceAll}

@@ -31,10 +31,14 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ id
   const quote = await getQuoteWithDetails(id);
   if (!quote) notFound();
 
-  const [products, fabrics, colors, knownAddOnCostsCents] = await Promise.all([
+  const [products, fabrics, colors, fixedPriceOptions, knownAddOnCostsCents] = await Promise.all([
     prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     prisma.fabric.findMany({ where: { active: true }, orderBy: { sourceName: "asc" } }),
     prisma.color.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    // All statuses, not just ACTIVE — a PENDING_VERIFICATION/INACTIVE option
+    // still needs to be visible in the UI (clearly labeled), just excluded
+    // from getKnownAddOnCostsCents()'s automatic-cost lookup below.
+    prisma.fixedPriceOption.findMany({ orderBy: { name: "asc" } }),
     getKnownAddOnCostsCents(),
   ]);
 
@@ -79,6 +83,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ id
         products={products.map((p) => ({ id: p.id, name: p.name, productType: p.productType }))}
         fabrics={fabrics.map((f) => ({ id: f.id, sourceName: f.sourceName, productId: f.productId }))}
         colors={colors.map((c) => ({ id: c.id, name: c.name, fabricId: c.fabricId }))}
+        fixedPriceOptions={fixedPriceOptions.map((o) => ({ id: o.id, name: o.name, category: o.category, costCents: o.costCents, status: o.status }))}
         totals={totals}
         unconfiguredSellingPriceCount={unconfiguredCount}
       />

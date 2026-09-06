@@ -11,10 +11,15 @@ const METHOD_LABELS: Record<string, string> = {
   TARGET_MARGIN: "Target margin rule",
   FIXED_AMOUNT: "Fixed amount rule",
   MANUAL: "Manually set",
+  SQUARE_FOOT_FORMULA: "Square-foot formula",
 };
 
+function formatProfitCents(cents: number | null): string {
+  return cents === null ? "NOT AVAILABLE" : formatCentsAsCurrency(cents);
+}
+
 function formatMarginBps(bps: number | null): string {
-  if (bps === null) return "—";
+  if (bps === null) return "NOT AVAILABLE";
   return `${(bps / 100).toFixed(2)}%`;
 }
 
@@ -82,9 +87,13 @@ export function CustomerPricePanel({ item, quoteId, onSaved }: { item: LineItemD
             </>
           )}
           <dt className="text-charcoal-soft">Gross Profit</dt>
-          <dd className="text-charcoal">{formatCentsAsCurrency(item.profitability.grossProfitCents)}</dd>
+          <dd className={item.profitability.grossProfitCents === null ? "font-medium text-amber-700" : "text-charcoal"}>
+            {formatProfitCents(item.profitability.grossProfitCents)}
+          </dd>
           <dt className="text-charcoal-soft">Gross Margin</dt>
-          <dd className="text-charcoal">{formatMarginBps(item.profitability.grossMarginBps)}</dd>
+          <dd className={item.profitability.grossMarginBps === null ? "font-medium text-amber-700" : "text-charcoal"}>
+            {formatMarginBps(item.profitability.grossMarginBps)}
+          </dd>
         </dl>
       )}
 
