@@ -13,21 +13,21 @@ All money is integer cents. All rates are basis points (bps); `10000` bps
 
 ## Customer pricing (general cash/card formula)
 
-```
-Total Internal Cost = Cost of Goods + Labor
+**This formula supersedes any conflicting customer selling-price wording
+elsewhere in this document.**
 
-Cash Price           = Total Internal Cost × 1.75      (7500 bps markup)
+```
+Cash Price           = (Cost of Goods + Labor) × 1.75   (7500 bps markup)
 Credit Card Fee      = Cash Price × 0.06                (600 bps)
 Credit Card Price    = Cash Price + Credit Card Fee
 ```
 
-- **75% markup on cost** = `7500` basis points. `Cash Price = Total Internal
-  Cost × 7500 / 10000`.
+- **75% markup on cost** = `7500` basis points. `Cash Price = (Cost of
+  Goods + Labor) × 7500 / 10000`.
 - **6% credit card fee** = `600` basis points. `Credit Card Fee = Cash Price
   × 600 / 10000`.
-- `Total Internal Cost` is only meaningful once **both** Cost of Goods and
-  Labor are known — this formula is not applied against a partial/unknown
-  cost.
+- This formula is only applied once **both** Cost of Goods and Labor are
+  known — never against a partial/unknown cost.
 
 **Status**: approved formula, not yet implemented in application code (see
 § Roller / Neolux below for how it applies there).
@@ -89,10 +89,9 @@ to derive a formula or table).
 
 ## Roller / Neolux customer selling price
 
-Use the general cash/card pricing formula above (`Total Internal Cost ×
-1.75`, plus the 6% credit card fee when applicable) **only** once a
-complete `Total Internal Cost` (Cost of Goods + Labor) is available for
-that line item.
+Use the general cash/card pricing formula above (`(Cost of Goods + Labor) ×
+1.75`, plus the 6% credit card fee when applicable) **only** once both
+Cost of Goods and Labor are available for that line item.
 
 **Never** use vendor retail automatically as the customer price, and never
 derive customer price from dealer cost by any other automatic markup.
