@@ -237,6 +237,30 @@ async function seedInstallationTripMinimumRule() {
   console.log("Created installation trip-minimum rule: $125 minimum for jobs under 5 shades (PENDING_VERIFICATION — not applied to quotes yet).");
 }
 
+/**
+ * Approved general cash/credit-card customer pricing formula (see
+ * docs/business-rules.md): 75% markup (7500 bps), 6% card fee (600 bps).
+ * Singleton config — `status` is excluded from the update clause so a
+ * later staff-made status change survives reseeding, matching every other
+ * business-pricing seed function here.
+ */
+async function seedCashCreditPricingConfig() {
+  const existing = await prisma.cashCreditPricingConfig.findFirst();
+  if (existing) {
+    await prisma.cashCreditPricingConfig.update({
+      where: { id: existing.id },
+      data: { markupBps: 7500, cardFeeBps: 600 },
+    });
+    console.log(`Cash/credit pricing config already existed (status: ${existing.status}) — rates re-synced.`);
+    return;
+  }
+
+  await prisma.cashCreditPricingConfig.create({
+    data: { markupBps: 7500, cardFeeBps: 600, status: BusinessPricingStatus.ACTIVE },
+  });
+  console.log("Created cash/credit pricing config: 75% markup (7500 bps), 6% card fee (600 bps), ACTIVE.");
+}
+
 async function main() {
   const vendor = await seedVendor();
   const productIdByType = await seedProducts(vendor.id);
@@ -244,6 +268,7 @@ async function main() {
   await seedShutterPricingRule(productIdByType);
   const fixedPriceOptionResult = await seedFixedPriceOptions();
   await seedInstallationTripMinimumRule();
+  await seedCashCreditPricingConfig();
 
   const totalFabrics = await prisma.fabric.count();
   const rollerShadeCount = await prisma.fabric.count({

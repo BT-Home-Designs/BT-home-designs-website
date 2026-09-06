@@ -140,6 +140,22 @@ enum SellingPriceRuleType {
   /// multiplier/markup/margin to, so this is its own method rather than
   /// reusing one of the four cost-based types above.
   SQUARE_FOOT_FORMULA
+  /// The general approved BT Home Designs cash/credit-card formula (see
+  /// docs/business-rules.md and CashCreditPricingConfig): Cash Price =
+  /// (Cost of Goods + Labor) x markup, Credit Card Price = Cash Price +
+  /// card fee. Applied automatically only when the full cost basis (Cost
+  /// of Goods and Labor) is known — see lib/quotes/cashCreditPricing.ts.
+  CASH_CREDIT_FORMULA
+}
+
+/// Outcome of one CashCreditPricingConfig-formula calculation. Unlike the
+/// matrix engine's 5-way status, there are only two meaningful outcomes
+/// here: either the full cost basis (Cost of Goods + Labor) and an ACTIVE
+/// config were available and the formula ran, or some part of that was
+/// missing and pricing is incomplete. Never a third "partial" state.
+enum CashCreditPricingStatus {
+  SUCCESS
+  NOT_CONFIGURED
 }
 
 /// Lifecycle for a configurable business-pricing record (a FixedPriceOption,
@@ -330,6 +346,12 @@ model QuoteLineItem {
   squareFootSnapshots         SquareFootPriceSnapshot[] @relation("LineItemSquareFootSnapshotHistory")
   currentSquareFootSnapshotId String?                   @unique
   currentSquareFootSnapshot   SquareFootPriceSnapshot?  @relation("LineItemCurrentSquareFootSnapshot", fields: [currentSquareFootSnapshotId], references: [id])
+
+  /// Same append-only-history + current-pointer pattern, for the general
+  /// CASH_CREDIT_FORMULA calculation — see CashCreditPriceSnapshot.
+  cashCreditSnapshots         CashCreditPriceSnapshot[] @relation("LineItemCashCreditSnapshotHistory")
+  currentCashCreditSnapshotId String?                   @unique
+  currentCashCreditSnapshot   CashCreditPriceSnapshot?  @relation("LineItemCurrentCashCreditSnapshot", fields: [currentCashCreditSnapshotId], references: [id])
 
   @@map("quote_line_items")
 }
@@ -549,6 +571,23 @@ model InstallationTripMinimumRule {
   @@map("installation_trip_minimum_rules")
 }
 
+/// Approved general cash/credit-card customer pricing formula (see
+/// docs/business-rules.md): Cash Price = (Cost of Goods + Labor) x
+/// markupBps / 10000; Credit Card Fee = Cash Price x cardFeeBps / 10000;
+/// Credit Card Price = Cash Price + Credit Card Fee. A single company-wide
+/// rate (not scoped to a product), so this is a singleton-style config —
+/// lib/quotes/cashCreditPricing.ts reads the one row with status ACTIVE.
+model CashCreditPricingConfig {
+  id         String                @id @default(cuid())
+  markupBps  Int
+  cardFeeBps Int
+  status     BusinessPricingStatus @default(ACTIVE)
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  @@map("cash_credit_pricing_configs")
+}
+
 // ---------------------------------------------------------------------------
 // Pricing audit
 // ---------------------------------------------------------------------------
@@ -662,4 +701,42 @@ model SquareFootPriceSnapshot {
   createdAt DateTime @default(now())
 
   @@map("square_foot_price_snapshots")
+}
+
+/// Immutable, append-only record of one CASH_CREDIT_FORMULA calculation —
+/// the CashCreditPricingConfig equivalent of SquareFootPriceSnapshot. Every
+/// applied rate and computed amount is frozen here at calculation time,
+/// NOT read live from CashCreditPricingConfig, so editing the approved
+/// markup/card-fee rate later never changes a quote that already has a
+/// snapshot. "The current price" is whichever row
+/// QuoteLineItem.currentCashCreditSnapshotId points at.
+model CashCreditPriceSnapshot {
+  id String @id @default(cuid())
+
+  quoteLineItemId String
+  quoteLineItem   QuoteLineItem @relation("LineItemCashCreditSnapshotHistory", fields: [quoteLineItemId], references: [id], onDelete: Cascade)
+
+  /// Back-reference for QuoteLineItem.currentCashCreditSnapshot.
+  currentForLineItem QuoteLineItem? @relation("LineItemCurrentCashCreditSnapshot")
+
+  status CashCreditPricingStatus
+
+  /// Frozen cost basis. Null on NOT_CONFIGURED — a missing component is
+  /// never substituted with $0.
+  costOfGoodsCents       Int?
+  laborCents             Int?
+  totalInternalCostCents Int?
+
+  /// Frozen inputs from CashCreditPricingConfig at calculation time.
+  appliedMarkupBps  Int?
+  markupAmountCents Int?
+  cashPriceCents    Int?
+
+  appliedCardFeeBps    Int?
+  creditCardFeeCents   Int?
+  creditCardPriceCents Int?
+
+  createdAt DateTime @default(now())
+
+  @@map("cash_credit_price_snapshots")
 }

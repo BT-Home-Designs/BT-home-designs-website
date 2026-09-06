@@ -12,6 +12,7 @@ const METHOD_LABELS: Record<string, string> = {
   FIXED_AMOUNT: "Fixed amount rule",
   MANUAL: "Manually set",
   SQUARE_FOOT_FORMULA: "Square-foot formula",
+  CASH_CREDIT_FORMULA: "Cash/credit-card formula",
 };
 
 function formatProfitCents(cents: number | null): string {
@@ -78,6 +79,14 @@ export function CustomerPricePanel({ item, quoteId, onSaved }: { item: LineItemD
           <dd className="font-medium text-charcoal">{formatCentsAsCurrency(item.sellingPriceCents)}</dd>
           <dt className="text-charcoal-soft">Method</dt>
           <dd className="text-charcoal">{item.sellingPriceMethod ? (METHOD_LABELS[item.sellingPriceMethod] ?? item.sellingPriceMethod) : "—"}</dd>
+          {item.sellingPriceMethod === "CASH_CREDIT_FORMULA" && item.currentCashCreditSnapshot?.status === "SUCCESS" && (
+            <>
+              <dt className="text-charcoal-soft">Cash / Check / ACH Price</dt>
+              <dd className="text-charcoal">{formatCentsAsCurrency(item.currentCashCreditSnapshot.cashPriceCents)}</dd>
+              <dt className="text-charcoal-soft">Credit Card Price</dt>
+              <dd className="text-charcoal">{formatCentsAsCurrency(item.currentCashCreditSnapshot.creditCardPriceCents)}</dd>
+            </>
+          )}
           {item.sellingPriceMethod === "MANUAL" && (
             <>
               <dt className="text-charcoal-soft">Set By</dt>

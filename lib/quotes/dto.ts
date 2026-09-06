@@ -16,6 +16,7 @@ const lineItemWithRelations = {
     color: true,
     currentPricingSnapshot: true,
     currentSquareFootSnapshot: true,
+    currentCashCreditSnapshot: true,
     sellingPriceRule: true,
     sellingPriceSetBy: true,
   },
@@ -65,6 +66,28 @@ export interface SquareFootSnapshotDTO {
   archChargeTotalCents: number | null;
   doorCutoutChargeTotalCents: number | null;
   totalCents: number | null;
+  createdAt: string;
+}
+
+/**
+ * General cash/credit-card formula result (see docs/business-rules.md,
+ * lib/quotes/cashCreditPricing.ts). costOfGoodsCents/laborCents/
+ * markupAmountCents are INTERNAL ONLY — a customer-facing panel must
+ * render only cashPriceCents ("Cash / Check / ACH Price") and
+ * creditCardPriceCents ("Credit Card Price"), never the cost breakdown.
+ */
+export interface CashCreditSnapshotDTO {
+  id: string;
+  status: string;
+  costOfGoodsCents: number | null;
+  laborCents: number | null;
+  totalInternalCostCents: number | null;
+  appliedMarkupBps: number | null;
+  markupAmountCents: number | null;
+  cashPriceCents: number | null;
+  appliedCardFeeBps: number | null;
+  creditCardFeeCents: number | null;
+  creditCardPriceCents: number | null;
   createdAt: string;
 }
 
@@ -130,6 +153,13 @@ export interface LineItemDTO {
    */
   currentShutterSnapshot: SquareFootSnapshotDTO | null;
 
+  /**
+   * Whatever QuoteLineItem.currentCashCreditSnapshotId points at — present
+   * only when sellingPriceMethod is CASH_CREDIT_FORMULA (or was, before
+   * the cost basis became incomplete again). Null otherwise.
+   */
+  currentCashCreditSnapshot: CashCreditSnapshotDTO | null;
+
   /** INTERNAL ONLY — never render outside an authenticated internal page. */
   costBreakdown: CostBreakdownDTO;
   /** INTERNAL ONLY — null whenever selling price or total cost is unavailable. */
@@ -178,6 +208,23 @@ function toSquareFootSnapshotDTO(snapshot: NonNullable<LineItemWithRelations["cu
   };
 }
 
+function toCashCreditSnapshotDTO(snapshot: NonNullable<LineItemWithRelations["currentCashCreditSnapshot"]>): CashCreditSnapshotDTO {
+  return {
+    id: snapshot.id,
+    status: snapshot.status,
+    costOfGoodsCents: snapshot.costOfGoodsCents,
+    laborCents: snapshot.laborCents,
+    totalInternalCostCents: snapshot.totalInternalCostCents,
+    appliedMarkupBps: snapshot.appliedMarkupBps,
+    markupAmountCents: snapshot.markupAmountCents,
+    cashPriceCents: snapshot.cashPriceCents,
+    appliedCardFeeBps: snapshot.appliedCardFeeBps,
+    creditCardFeeCents: snapshot.creditCardFeeCents,
+    creditCardPriceCents: snapshot.creditCardPriceCents,
+    createdAt: snapshot.createdAt.toISOString(),
+  };
+}
+
 /**
  * Each requested add-on becomes one line in the cost breakdown, matched
  * against the FixedPriceOption catalog by exact name — motorization/remote/
@@ -213,6 +260,7 @@ function requestedAddOnNames(lineItem: LineItemWithRelations): string[] {
 export function toLineItemDTO(lineItem: LineItemWithRelations, knownAddOnCostsCents: ReadonlyMap<string, number> = new Map()): LineItemDTO {
   const currentSnapshot = lineItem.currentPricingSnapshot ? toPricingSnapshotDTO(lineItem.currentPricingSnapshot) : null;
   const currentShutterSnapshot = lineItem.currentSquareFootSnapshot ? toSquareFootSnapshotDTO(lineItem.currentSquareFootSnapshot) : null;
+  const currentCashCreditSnapshot = lineItem.currentCashCreditSnapshot ? toCashCreditSnapshotDTO(lineItem.currentCashCreditSnapshot) : null;
 
   const costBreakdown = calculateCompositeCost({
     baseDealerCostCents: currentSnapshot?.pricingStatus === "SUCCESS" ? currentSnapshot.dealerCostCents : null,
@@ -258,6 +306,7 @@ export function toLineItemDTO(lineItem: LineItemWithRelations, knownAddOnCostsCe
     sellingPriceReason: lineItem.sellingPriceReason,
     currentSnapshot,
     currentShutterSnapshot,
+    currentCashCreditSnapshot,
     costBreakdown,
     profitability,
   };

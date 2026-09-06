@@ -74,6 +74,9 @@ export function applySellingPriceRule(rule: SellingPriceRuleConfig, costCents: n
     case "SQUARE_FOOT_FORMULA":
       return configurationError("SQUARE_FOOT_FORMULA is computed by the shutter pricing engine, not by applySellingPriceRule.");
 
+    case "CASH_CREDIT_FORMULA":
+      return configurationError("CASH_CREDIT_FORMULA is computed by lib/quotes/cashCreditPricing.ts, not by applySellingPriceRule.");
+
     default: {
       const exhaustiveCheck: never = rule.ruleType;
       return configurationError(`Unknown selling price rule type: ${String(exhaustiveCheck)}`);

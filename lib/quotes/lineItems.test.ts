@@ -123,7 +123,7 @@ describe("line items — CRUD, ordering, and pricing integration", () => {
     assert.ok(repriceResult.snapshot?.warnings.includes("SOURCE DATA WARNING: H74/W42 VALUE SHOULD BE HUMAN-VERIFIED"));
   });
 
-  test("12. selling price remains NOT_CONFIGURED after creation and after pricing", async () => {
+  test("12. selling price is NOT_CONFIGURED at creation; once dealer cost is known, the approved cash/credit formula prices it automatically", async () => {
     const created = await addLineItem(quoteId);
     assert.equal(created.sellingPriceStatus, "NOT_CONFIGURED");
     assert.equal(created.sellingPriceCents, null);
@@ -133,8 +133,11 @@ describe("line items — CRUD, ordering, and pricing integration", () => {
       baseInput({ productId: rollerShadeProductId, fabricId: vx3000FabricId, width: 30, height: 40 })
     );
 
-    assert.equal(lineItem.sellingPriceStatus, "NOT_CONFIGURED");
-    assert.equal(lineItem.sellingPriceCents, null);
+    // Dealer cost 8640, no labor requested -> Cost of Goods 8640, Labor 0.
+    // Cash Price = 8640 x 1.75 = 15120 (see docs/business-rules.md).
+    assert.equal(lineItem.sellingPriceStatus, "SET");
+    assert.equal(lineItem.sellingPriceMethod, "CASH_CREDIT_FORMULA");
+    assert.equal(lineItem.sellingPriceCents, 15120);
   });
 
   test("Neolux line items price through the same engine as Roller Shade", async () => {

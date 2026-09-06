@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import type { SellingPriceRule } from "@prisma/client";
 import { applySellingPriceRule } from "@/lib/pricing/sellingPrice/engine";
+import { attemptCashCreditFormula } from "./cashCreditPricing";
 
 /**
  * Most-specific-wins lookup: a rule scoped to this exact product, else a
@@ -48,9 +49,13 @@ export const NOT_CONFIGURED_UPDATE = {
  * "correct" it back to NOT_CONFIGURED the moment it finds no
  * SellingPriceRule for a shutter product, since shutters don't use one).
  *
- * If no rule resolves (today: always, since none exist) or the resolved
- * rule can't compute (e.g. cost unknown), the line item is explicitly
- * reset to NOT_CONFIGURED rather than left showing a stale price.
+ * If a per-product/type/vendor SellingPriceRule resolves, it wins (as
+ * before). Otherwise, falls back to the general approved cash/credit-card
+ * formula (see docs/business-rules.md, lib/quotes/cashCreditPricing.ts) —
+ * this only produces a price once the full cost basis (Cost of Goods +
+ * Labor) is known; an incomplete cost basis or a resolved-but-uncomputable
+ * rule both leave the line item explicitly NOT_CONFIGURED rather than
+ * showing a stale price.
  */
 export async function applyAutomaticSellingPrice(lineItemId: string): Promise<void> {
   const lineItem = await prisma.quoteLineItem.findUniqueOrThrow({
@@ -62,7 +67,21 @@ export async function applyAutomaticSellingPrice(lineItemId: string): Promise<vo
 
   const rule = await resolveSellingPriceRuleForProduct(lineItem.productId);
   if (!rule) {
-    if (lineItem.sellingPriceStatus !== "NOT_CONFIGURED") {
+    const { snapshot } = await attemptCashCreditFormula(lineItemId);
+    if (snapshot.status === "SUCCESS") {
+      await prisma.quoteLineItem.update({
+        where: { id: lineItemId },
+        data: {
+          sellingPriceStatus: "SET",
+          sellingPriceCents: snapshot.cashPriceCents,
+          sellingPriceMethod: "CASH_CREDIT_FORMULA",
+          sellingPriceRuleId: null,
+          sellingPriceSetById: null,
+          sellingPriceSetAt: new Date(),
+          sellingPriceReason: null,
+        },
+      });
+    } else if (lineItem.sellingPriceStatus !== "NOT_CONFIGURED") {
       await prisma.quoteLineItem.update({ where: { id: lineItemId }, data: NOT_CONFIGURED_UPDATE });
     }
     return;

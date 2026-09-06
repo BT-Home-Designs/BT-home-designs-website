@@ -60,19 +60,20 @@ describe("selling price — resolution, manual override, and cost isolation", ()
     };
   }
 
-  test("5. selling price remains NOT_CONFIGURED when no rule exists for the product", async () => {
+  test("5. with no SellingPriceRule for the product, the approved cash/credit formula prices it instead of leaving it NOT_CONFIGURED", async () => {
     const created = await addLineItem(quoteId);
     const { lineItem } = await updateLineItem(
       created.id,
       baseInput({ productId: rollerShadeProductId, fabricId: vx3000FabricId, width: 30, height: 40 })
     );
 
-    assert.equal(lineItem.sellingPriceStatus, "NOT_CONFIGURED");
-    assert.equal(lineItem.sellingPriceCents, null);
-    assert.equal(lineItem.sellingPriceMethod, null);
+    // Dealer cost 8640, no labor requested -> Cash Price = 8640 x 1.75 = 15120.
+    assert.equal(lineItem.sellingPriceStatus, "SET");
+    assert.equal(lineItem.sellingPriceCents, 15120);
+    assert.equal(lineItem.sellingPriceMethod, "CASH_CREDIT_FORMULA");
   });
 
-  test("22. dealer cost never automatically becomes the customer selling price", async () => {
+  test("22. dealer cost never directly BECOMES the customer selling price — it only feeds the approved cash/credit formula", async () => {
     const created = await addLineItem(quoteId);
     const { lineItem, repriceResult } = await updateLineItem(
       created.id,
@@ -81,10 +82,11 @@ describe("selling price — resolution, manual override, and cost isolation", ()
 
     // Dealer cost WAS computed successfully...
     assert.equal(repriceResult.snapshot?.dealerCostCents, 8640);
-    // ...but selling price is still not configured, and specifically is
-    // never silently set to that dealer-cost value (or vendor retail).
-    assert.equal(lineItem.sellingPriceStatus, "NOT_CONFIGURED");
-    assert.equal(lineItem.sellingPriceCents, null);
+    // ...and the automatic selling price is a real, computed formula
+    // result (Cost of Goods x 1.75) — never the raw dealer cost or vendor
+    // retail value passed through unchanged.
+    assert.equal(lineItem.sellingPriceStatus, "SET");
+    assert.equal(lineItem.sellingPriceCents, 15120);
     assert.notEqual(lineItem.sellingPriceCents, repriceResult.snapshot?.dealerCostCents);
     assert.notEqual(lineItem.sellingPriceCents, repriceResult.snapshot?.retailCents);
   });
