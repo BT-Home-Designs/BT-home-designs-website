@@ -1,21 +1,47 @@
 import { prisma } from "@/lib/db/prisma";
-import type { QuoteLineItem, PricingSnapshot, CashCreditPriceSnapshot } from "@prisma/client";
+import type { QuoteLineItem, PricingSnapshot, SquareFootPriceSnapshot, CashCreditPriceSnapshot } from "@prisma/client";
 import { calculateCashCreditPrice } from "@/lib/pricing/cashCredit/engine";
 import { getKnownAddOnCostsCents } from "./fixedPriceOptions";
 
-type LineItemForCostBasis = QuoteLineItem & { currentPricingSnapshot: PricingSnapshot | null };
+type LineItemForCostBasis = QuoteLineItem & {
+  currentPricingSnapshot: PricingSnapshot | null;
+  currentSquareFootSnapshot: SquareFootPriceSnapshot | null;
+};
 
 /**
- * Cost of Goods = the matrix engine's dealer cost (only when the current
- * PricingSnapshot is SUCCESS — never vendor retail) plus any requested
- * accessory (motorization/remote/hub/solar charger) cost from the
- * FixedPriceOption catalog. Null (unknown) whenever dealer cost is
- * unavailable or any requested accessory isn't ACTIVE-priced — a missing
- * component makes the whole cost basis unknown, never partially summed.
+ * The base Cost of Goods, before accessories — from whichever pricing
+ * engine actually applies to this line item's product, never vendor
+ * retail and never invented when neither engine has produced a result:
+ *  - Roller Shade / Neolux: the matrix engine's dealer cost (only when
+ *    the current PricingSnapshot is SUCCESS).
+ *  - Plantation Shutter: the square-foot engine's COGS total — width x
+ *    height / 144 x $17.25, plus arch/cutout charges (see
+ *    lib/quotes/shutterPricing.ts) — only when the current
+ *    SquareFootPriceSnapshot is SUCCESS. Per docs/business-rules.md this
+ *    rate is an internal cost input, not a customer price.
+ */
+function resolveBaseCostOfGoodsCents(lineItem: LineItemForCostBasis): number | null {
+  if (lineItem.currentPricingSnapshot?.pricingStatus === "SUCCESS") {
+    return lineItem.currentPricingSnapshot.dealerCostCents;
+  }
+  if (lineItem.currentSquareFootSnapshot?.status === "SUCCESS") {
+    return lineItem.currentSquareFootSnapshot.totalCents;
+  }
+  return null;
+}
+
+/**
+ * Cost of Goods = the base cost above plus any requested accessory
+ * (motorization/remote/hub/solar charger) cost from the FixedPriceOption
+ * catalog — per docs/business-rules.md, these are internal cost-of-goods
+ * inputs, never a customer-facing price by themselves. Null (unknown)
+ * whenever the base cost is unavailable or any requested accessory isn't
+ * ACTIVE-priced — a missing component makes the whole cost basis unknown,
+ * never partially summed.
  */
 function resolveCostOfGoodsCents(lineItem: LineItemForCostBasis, knownCosts: ReadonlyMap<string, number>): number | null {
-  const dealerCostCents = lineItem.currentPricingSnapshot?.pricingStatus === "SUCCESS" ? lineItem.currentPricingSnapshot.dealerCostCents : null;
-  if (dealerCostCents === null) return null;
+  const baseCostOfGoodsCents = resolveBaseCostOfGoodsCents(lineItem);
+  if (baseCostOfGoodsCents === null) return null;
 
   const accessoryNames = [lineItem.motorization, lineItem.remote, lineItem.hub, lineItem.solarCharger].filter((v): v is string => v !== null);
 
@@ -26,7 +52,7 @@ function resolveCostOfGoodsCents(lineItem: LineItemForCostBasis, knownCosts: Rea
     accessoryCents += cost;
   }
 
-  return dealerCostCents + accessoryCents;
+  return baseCostOfGoodsCents + accessoryCents;
 }
 
 /**
@@ -71,7 +97,7 @@ export async function attemptCashCreditFormula(lineItemId: string): Promise<Cash
   const [lineItem, knownCosts, config] = await Promise.all([
     prisma.quoteLineItem.findUniqueOrThrow({
       where: { id: lineItemId },
-      include: { currentPricingSnapshot: true, currentCashCreditSnapshot: true },
+      include: { currentPricingSnapshot: true, currentSquareFootSnapshot: true, currentCashCreditSnapshot: true },
     }),
     getKnownAddOnCostsCents(),
     prisma.cashCreditPricingConfig.findFirst({ where: { status: "ACTIVE" } }),

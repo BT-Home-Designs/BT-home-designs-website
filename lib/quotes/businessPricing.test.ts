@@ -83,11 +83,14 @@ describe("records intentionally NOT active yet", () => {
     assert.equal(known.has("Cordless Upgrade (Roller Shade)"), false);
   });
 
-  test("the installation trip-minimum rule holds the approved numbers but is PENDING_VERIFICATION", async () => {
+});
+
+describe("installer trip-minimum — additive formula confirmed and ACTIVE (Phase 7)", () => {
+  test("the installation trip-minimum rule holds the approved numbers and is now ACTIVE", async () => {
     const rule = await prisma.installationTripMinimumRule.findFirstOrThrow();
     assert.equal(rule.minimumChargeCents, 12500);
     assert.equal(rule.qualifiesUnderShadeCount, 5);
-    assert.equal(rule.status, "PENDING_VERIFICATION");
+    assert.equal(rule.status, "ACTIVE");
   });
 });
 

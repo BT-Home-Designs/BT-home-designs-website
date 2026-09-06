@@ -142,17 +142,22 @@ describe("general cash/credit-card customer pricing formula (docs/business-rules
     }
   });
 
-  test("Plantation Shutter line items are never touched by the cash/credit formula (SQUARE_FOOT_FORMULA is protected)", async () => {
+  test("Plantation Shutter COGS (square-foot engine) flows through the SAME cash/credit formula as Roller/Neolux dealer cost", async () => {
     const created = await addLineItem(quoteId);
     const { lineItem } = await updateLineItem(
       created.id,
       baseInput({ productId: shutterProductId, fabricId: null, width: 36, height: 60 })
     );
 
-    assert.equal(lineItem.sellingPriceMethod, "SQUARE_FOOT_FORMULA");
-    assert.equal(lineItem.sellingPriceCents, 25875); // unaffected by this task's changes
+    // COGS 25875 (36x60 shutter, no arch/cutout), Labor 0 (no installation
+    // field on the shutter UI) -> Cash Price = round(25875 x 1.75) = 45281.
+    assert.equal(lineItem.sellingPriceMethod, "CASH_CREDIT_FORMULA");
+    assert.equal(lineItem.sellingPriceCents, 45281);
     const persisted = await prisma.quoteLineItem.findUniqueOrThrow({ where: { id: created.id } });
-    assert.equal(persisted.currentCashCreditSnapshotId, null);
+    assert.notEqual(persisted.currentCashCreditSnapshotId, null);
+    const snapshot = await prisma.cashCreditPriceSnapshot.findUniqueOrThrow({ where: { id: persisted.currentCashCreditSnapshotId! } });
+    assert.equal(snapshot.costOfGoodsCents, 25875);
+    assert.equal(snapshot.laborCents, 0);
   });
 
   test("a manual selling price is never overwritten by the cash/credit formula on a later reprice", async () => {

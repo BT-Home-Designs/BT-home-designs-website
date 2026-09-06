@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import type { SquareFootPriceSnapshot } from "@prisma/client";
 import { calculateSquareFootCost } from "@/lib/pricing/squareFoot/engine";
-import { NOT_CONFIGURED_UPDATE } from "./sellingPrice";
 
 export interface ShutterRepriceResult {
   /** false = square-foot pricing was never attempted (not a SQUARE_FOOT product, or dimensions missing). */
@@ -17,10 +16,11 @@ async function clearCurrentSquareFootSnapshotIfSet(lineItemId: string, currentId
 }
 
 /**
- * Prices a Plantation-Shutter-style line item using its product's
- * SquareFootPricingRule: (width x height / 144) x rate, plus arch panel
- * and door cutout charges, x quantity. Mirrors repriceLineItemIfNeeded's
- * (matrix) state machine exactly:
+ * Computes (or reuses) a Plantation-Shutter-style line item's INTERNAL
+ * COST OF GOODS using its product's SquareFootPricingRule: (width x
+ * height / 144) x rate, plus arch panel and door cutout charges, x
+ * quantity. Mirrors repriceLineItemIfNeeded's (matrix) state machine
+ * exactly:
  *
  *  - Not a SQUARE_FOOT product, or width/height missing: pointer cleared
  *    to null, nothing attempted.
@@ -32,10 +32,14 @@ async function clearCurrentSquareFootSnapshotIfSet(lineItemId: string, currentId
  *    or invalid dimensions produces a CONFIGURATION_ERROR /
  *    INVALID_DIMENSIONS row, never a fabricated price.
  *
- * On SUCCESS, also sets the line item's customer selling price directly
- * (sellingPriceMethod = SQUARE_FOOT_FORMULA) since there is no "cost" to
- * apply a SellingPriceRule to here — unless sellingPriceMethod is already
- * MANUAL, which this never overwrites.
+ * IMPORTANT (confirmed rule — see docs/business-rules.md): the $17.25/sq ft
+ * rate and the arch/cutout charges are INTERNAL COST OF GOODS inputs, not
+ * a customer selling price. `snapshot.totalCents` on SUCCESS is that COGS
+ * total. This function never touches QuoteLineItem.sellingPrice* fields —
+ * lib/quotes/cashCreditPricing.ts reads this snapshot's COGS and runs it
+ * through the standard cash/credit-card formula to produce the actual
+ * customer price, the same as it does with the matrix engine's dealer
+ * cost for Roller Shade / Neolux.
  */
 export async function repriceShutterLineItemIfNeeded(lineItemId: string): Promise<ShutterRepriceResult> {
   const lineItem = await prisma.quoteLineItem.findUniqueOrThrow({
@@ -127,26 +131,6 @@ export async function repriceShutterLineItemIfNeeded(lineItemId: string): Promis
     where: { id: lineItemId },
     data: { currentSquareFootSnapshotId: snapshot.id },
   });
-
-  // Propagate to customer selling price directly — never overwrite a manual override.
-  if (lineItem.sellingPriceMethod !== "MANUAL") {
-    if (snapshot.status === "SUCCESS") {
-      await prisma.quoteLineItem.update({
-        where: { id: lineItemId },
-        data: {
-          sellingPriceStatus: "SET",
-          sellingPriceCents: snapshot.totalCents,
-          sellingPriceMethod: "SQUARE_FOOT_FORMULA",
-          sellingPriceRuleId: null,
-          sellingPriceSetById: null,
-          sellingPriceSetAt: new Date(),
-          sellingPriceReason: null,
-        },
-      });
-    } else {
-      await prisma.quoteLineItem.update({ where: { id: lineItemId }, data: NOT_CONFIGURED_UPDATE });
-    }
-  }
 
   return { attempted: true, snapshot, reasonNotAttempted: null };
 }

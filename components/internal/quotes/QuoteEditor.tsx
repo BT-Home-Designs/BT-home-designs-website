@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { LineItemDTO } from "@/lib/quotes/dto";
 import type { QuoteTotalsResult } from "@/lib/quotes/totals";
+import type { QuoteInstallerMinimumResult } from "@/lib/quotes/installationPricing";
 import { LineItemCard, type ProductOption, type FabricOption, type ColorOption, type FixedPriceOptionOption } from "./LineItemCard";
 import { QuoteHeaderForm, type QuoteHeaderDefaults } from "./QuoteHeaderForm";
 import { QuoteTotalsSummary } from "./QuoteTotalsSummary";
@@ -18,6 +19,7 @@ export function QuoteEditor({
   fixedPriceOptions,
   totals,
   unconfiguredSellingPriceCount,
+  installerMinimum,
 }: {
   quoteId: string;
   headerDefaults: QuoteHeaderDefaults;
@@ -28,6 +30,7 @@ export function QuoteEditor({
   fixedPriceOptions: FixedPriceOptionOption[];
   totals: QuoteTotalsResult;
   unconfiguredSellingPriceCount: number;
+  installerMinimum: QuoteInstallerMinimumResult;
 }) {
   const [lineItems, setLineItems] = useState<LineItemDTO[]>(initialLineItems);
   const [isAdding, startAddTransition] = useTransition();
@@ -110,7 +113,9 @@ export function QuoteEditor({
         </div>
       </div>
 
-      {lineItems.length > 0 && <QuoteTotalsSummary totals={totals} unconfiguredCount={unconfiguredSellingPriceCount} />}
+      {(lineItems.length > 0 || installerMinimum.applies) && (
+        <QuoteTotalsSummary totals={totals} unconfiguredCount={unconfiguredSellingPriceCount} installerMinimum={installerMinimum} />
+      )}
     </div>
   );
 }

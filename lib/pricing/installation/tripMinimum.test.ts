@@ -3,81 +3,65 @@ import assert from "node:assert/strict";
 import { prisma } from "@/lib/db/prisma";
 import { calculateInstallationTripMinimum } from "./tripMinimum";
 
-describe("installer trip-minimum fee — floor/minimum model (confirmed business decision)", () => {
+describe("installer trip-minimum fee — additive model (confirmed business decision)", () => {
   const activeRule = { minimumChargeCents: 12500, qualifiesUnderShadeCount: 5, status: "ACTIVE" as const };
 
-  test("itemized labor already at/above $125 on a 2-shade job: the floor has no effect", () => {
-    const result = calculateInstallationTripMinimum({
-      lineItemInstallationCostsCents: [7500, 7500], // 2 x $75 Base Installation = $150, already >= $125
-      shadeCount: 2,
-      rule: activeRule,
-    });
-    assert.equal(result.itemizedInstallationTotalCents, 15000);
-    assert.equal(result.applied, false);
-    assert.equal(result.reason, "LABOR_ALREADY_MEETS_MINIMUM");
-  });
-
-  test("a single $75 base install on a 1-shade job: itemized $75 is below the $125 floor, so the floor applies", () => {
-    const result = calculateInstallationTripMinimum({
-      lineItemInstallationCostsCents: [7500],
-      shadeCount: 1,
-      rule: activeRule,
-    });
-    assert.equal(result.itemizedInstallationTotalCents, 7500);
+  test("qualifying job (under 5 shades): $125 is ADDED on top of normal labor, never a floor/max", () => {
+    const result = calculateInstallationTripMinimum({ normalLaborCents: 7500, shadeCount: 2, rule: activeRule });
     assert.equal(result.applied, true);
-    assert.equal(result.reason, "MINIMUM_APPLIED");
-    assert.equal(result.effectiveInstallationTotalCents, 12500);
+    assert.equal(result.reason, "MINIMUM_ADDED");
+    assert.equal(result.totalLaborCents, 7500 + 12500);
+    // Never max(normalLabor, minimum) — always the sum, even when normal
+    // labor already exceeds $125.
+    assert.notEqual(result.totalLaborCents, Math.max(7500, 12500));
   });
 
-  test("itemized labor never double-charged: the minimum REPLACES, it never adds to, the itemized total", () => {
-    const result = calculateInstallationTripMinimum({
-      lineItemInstallationCostsCents: [7500],
-      shadeCount: 1,
-      rule: activeRule,
-    });
-    // Effective total is exactly the flat minimum — not 7500 + 12500.
-    assert.equal(result.effectiveInstallationTotalCents, 12500);
-    assert.notEqual(result.effectiveInstallationTotalCents, 7500 + 12500);
+  test("normal labor already above $125 still gets the $125 added, not replaced", () => {
+    const result = calculateInstallationTripMinimum({ normalLaborCents: 15000, shadeCount: 1, rule: activeRule });
+    assert.equal(result.applied, true);
+    assert.equal(result.totalLaborCents, 15000 + 12500);
   });
 
-  test("a job with 5 or more shades never qualifies, regardless of itemized labor", () => {
-    const result = calculateInstallationTripMinimum({
-      lineItemInstallationCostsCents: [7500],
-      shadeCount: 5,
-      rule: activeRule,
-    });
+  test("normal labor of 0 (no installation requested) still gets the $125 added for a qualifying job", () => {
+    const result = calculateInstallationTripMinimum({ normalLaborCents: 0, shadeCount: 1, rule: activeRule });
+    assert.equal(result.applied, true);
+    assert.equal(result.totalLaborCents, 12500);
+  });
+
+  test("a job with 5 or more shades never qualifies — no addition, regardless of labor", () => {
+    const result = calculateInstallationTripMinimum({ normalLaborCents: 7500, shadeCount: 5, rule: activeRule });
     assert.equal(result.applied, false);
     assert.equal(result.reason, "DOES_NOT_QUALIFY");
-    assert.equal(result.effectiveInstallationTotalCents, 7500);
+    assert.equal(result.totalLaborCents, 7500);
   });
 
-  test("an unconfigured (null) line-item installation cost keeps the itemized total unknown, never partially summed", () => {
-    const result = calculateInstallationTripMinimum({
-      lineItemInstallationCostsCents: [7500, null],
-      shadeCount: 2,
-      rule: activeRule,
-    });
-    assert.equal(result.itemizedInstallationTotalCents, null);
+  test("unknown normal labor (some line item NOT_CONFIGURED) keeps the total unknown, never treated as $0", () => {
+    const result = calculateInstallationTripMinimum({ normalLaborCents: null, shadeCount: 2, rule: activeRule });
     assert.equal(result.applied, false);
-    assert.equal(result.reason, "UNKNOWN_ITEMIZED_TOTAL");
+    assert.equal(result.reason, "UNKNOWN_NORMAL_LABOR");
+    assert.equal(result.totalLaborCents, null);
   });
 
   test("no rule at all: never applied", () => {
-    const result = calculateInstallationTripMinimum({ lineItemInstallationCostsCents: [7500], shadeCount: 1, rule: null });
+    const result = calculateInstallationTripMinimum({ normalLaborCents: 7500, shadeCount: 1, rule: null });
     assert.equal(result.applied, false);
     assert.equal(result.reason, "RULE_MISSING");
   });
 
-  test("the real seeded InstallationTripMinimumRule is PENDING_VERIFICATION, so it never applies to any real quote yet", async () => {
-    const seededRule = await prisma.installationTripMinimumRule.findFirstOrThrow();
-    assert.equal(seededRule.status, "PENDING_VERIFICATION");
-
+  test("rule present but not ACTIVE: never applied", () => {
     const result = calculateInstallationTripMinimum({
-      lineItemInstallationCostsCents: [7500],
+      normalLaborCents: 7500,
       shadeCount: 1,
-      rule: { minimumChargeCents: seededRule.minimumChargeCents, qualifiesUnderShadeCount: seededRule.qualifiesUnderShadeCount, status: seededRule.status },
+      rule: { ...activeRule, status: "PENDING_VERIFICATION" },
     });
     assert.equal(result.applied, false);
     assert.equal(result.reason, "RULE_NOT_ACTIVE");
+  });
+
+  test("the real seeded InstallationTripMinimumRule now holds the confirmed additive numbers and is ACTIVE", async () => {
+    const seededRule = await prisma.installationTripMinimumRule.findFirstOrThrow();
+    assert.equal(seededRule.minimumChargeCents, 12500);
+    assert.equal(seededRule.qualifiesUnderShadeCount, 5);
+    assert.equal(seededRule.status, "ACTIVE");
   });
 });

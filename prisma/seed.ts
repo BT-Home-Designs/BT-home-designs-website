@@ -215,15 +215,26 @@ async function seedFixedPriceOptions() {
 }
 
 /**
- * Approved numbers ($125 / under 5 shades) but PENDING_VERIFICATION on
- * `create` only — how this interacts with per-shade installation labor
- * (replace vs. supplement) is an open business decision; see AGENTS.md /
- * project history (Phase 6). Never applied to a quote while not ACTIVE.
+ * Approved numbers ($125 / under 5 shades). Originally seeded
+ * PENDING_VERIFICATION because how it interacts with per-shade
+ * installation labor (replace vs. supplement) was an open business
+ * decision — see AGENTS.md / project history (Phase 6). CONFIRMED in
+ * Phase 7 (see docs/business-rules.md): ADDITIVE — the $125 is added on
+ * top of normal calculated labor for a qualifying job, never a floor/max.
+ * A pre-existing PENDING_VERIFICATION row is promoted to ACTIVE exactly
+ * once here, since that status existed only to gate this specific
+ * decision, now resolved; any OTHER status (INACTIVE, or an ACTIVE row a
+ * staff member later deactivated) is left alone.
  */
 async function seedInstallationTripMinimumRule() {
   const existing = await prisma.installationTripMinimumRule.findFirst();
   if (existing) {
-    console.log(`Installation trip-minimum rule already exists (status: ${existing.status}) — left as-is.`);
+    if (existing.status === BusinessPricingStatus.PENDING_VERIFICATION) {
+      await prisma.installationTripMinimumRule.update({ where: { id: existing.id }, data: { status: BusinessPricingStatus.ACTIVE } });
+      console.log("Installation trip-minimum rule: additive formula now confirmed — promoted PENDING_VERIFICATION to ACTIVE.");
+    } else {
+      console.log(`Installation trip-minimum rule already exists (status: ${existing.status}) — left as-is.`);
+    }
     return;
   }
 
@@ -231,10 +242,10 @@ async function seedInstallationTripMinimumRule() {
     data: {
       minimumChargeCents: 12500,
       qualifiesUnderShadeCount: 5,
-      status: BusinessPricingStatus.PENDING_VERIFICATION,
+      status: BusinessPricingStatus.ACTIVE,
     },
   });
-  console.log("Created installation trip-minimum rule: $125 minimum for jobs under 5 shades (PENDING_VERIFICATION — not applied to quotes yet).");
+  console.log("Created installation trip-minimum rule: $125 additive minimum for jobs under 5 shades (ACTIVE).");
 }
 
 /**

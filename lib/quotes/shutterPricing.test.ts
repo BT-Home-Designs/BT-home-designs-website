@@ -5,7 +5,7 @@ import { createCustomer } from "./customers";
 import { createQuote } from "./quotes";
 import { addLineItem, updateLineItem, type LineItemFieldsInput } from "./lineItems";
 
-describe("Plantation Shutter square-foot pricing", () => {
+describe("Plantation Shutter square-foot INTERNAL COST OF GOODS calculation", () => {
   let customerId: string;
   let quoteId: string;
   let shutterProductId: string;
@@ -50,52 +50,56 @@ describe("Plantation Shutter square-foot pricing", () => {
     };
   }
 
-  test("1. 36x60 shutter: 36x60/144 = 15 sq ft, 15 x $17.25 = $258.75", async () => {
+  test("1. 36x60 shutter: 36x60/144 = 15 sq ft, 15 x $17.25 = $258.75 COGS -> Cash Price $258.75 x 1.75 = $452.81", async () => {
     const created = await addLineItem(quoteId);
     const { lineItem, shutterRepriceResult } = await updateLineItem(created.id, baseInput({ width: 36, height: 60 }));
 
     assert.equal(shutterRepriceResult.snapshot?.status, "SUCCESS");
     assert.equal(Number(shutterRepriceResult.snapshot?.squareFeet), 15);
     assert.equal(shutterRepriceResult.snapshot?.perUnitBaseCents, 25875);
-    assert.equal(shutterRepriceResult.snapshot?.totalCents, 25875);
+    assert.equal(shutterRepriceResult.snapshot?.totalCents, 25875); // internal COGS, not a customer price
+
+    // COGS 25875, Labor 0 (no installation requested) -> Cash Price = round(25875 x 1.75) = 45281.
     assert.equal(lineItem.sellingPriceStatus, "SET");
-    assert.equal(lineItem.sellingPriceMethod, "SQUARE_FOOT_FORMULA");
-    assert.equal(lineItem.sellingPriceCents, 25875);
+    assert.equal(lineItem.sellingPriceMethod, "CASH_CREDIT_FORMULA");
+    assert.equal(lineItem.sellingPriceCents, 45281);
   });
 
-  test("2. 36x60 shutter, quantity 2: $517.50", async () => {
+  test("2. 36x60 shutter, quantity 2: COGS $517.50 -> Cash Price $905.63", async () => {
     const created = await addLineItem(quoteId);
-    const { lineItem } = await updateLineItem(created.id, baseInput({ width: 36, height: 60, quantity: 2 }));
+    const { lineItem, shutterRepriceResult } = await updateLineItem(created.id, baseInput({ width: 36, height: 60, quantity: 2 }));
 
-    assert.equal(lineItem.sellingPriceCents, 51750);
+    assert.equal(shutterRepriceResult.snapshot?.totalCents, 51750);
+    assert.equal(lineItem.sellingPriceCents, 90563); // round(51750 x 1.75) = round(90562.5) = 90563
   });
 
-  test("3. 36x60 shutter with one arch: $408.75", async () => {
+  test("3. 36x60 shutter with one arch: COGS $408.75 -> Cash Price $715.31", async () => {
     const created = await addLineItem(quoteId);
     const { lineItem, shutterRepriceResult } = await updateLineItem(created.id, baseInput({ width: 36, height: 60, archPanelCount: 1 }));
 
-    // 258.75 base + 150.00 arch = 408.75
+    // 258.75 base + 150.00 arch = 408.75 COGS
     assert.equal(shutterRepriceResult.snapshot?.archChargeTotalCents, 15000);
-    assert.equal(lineItem.sellingPriceCents, 40875);
+    assert.equal(shutterRepriceResult.snapshot?.totalCents, 40875);
+    assert.equal(lineItem.sellingPriceCents, 71531); // round(40875 x 1.75) = round(71531.25) = 71531
   });
 
-  test("4. 36x60 shutter with one door cutout: $408.75", async () => {
+  test("4. 36x60 shutter with one door cutout: COGS $408.75 -> Cash Price $715.31", async () => {
     const created = await addLineItem(quoteId);
     const { lineItem, shutterRepriceResult } = await updateLineItem(created.id, baseInput({ width: 36, height: 60, doorCutoutCount: 1 }));
 
     assert.equal(shutterRepriceResult.snapshot?.doorCutoutChargeTotalCents, 15000);
-    assert.equal(lineItem.sellingPriceCents, 40875);
+    assert.equal(lineItem.sellingPriceCents, 71531);
   });
 
-  test("5. 36x60 shutter with one arch + one door cutout: $558.75", async () => {
+  test("5. 36x60 shutter with one arch + one door cutout: COGS $558.75 -> Cash Price $977.81", async () => {
     const created = await addLineItem(quoteId);
     const { lineItem } = await updateLineItem(created.id, baseInput({ width: 36, height: 60, archPanelCount: 1, doorCutoutCount: 1 }));
 
-    // 258.75 + 150.00 + 150.00 = 558.75
-    assert.equal(lineItem.sellingPriceCents, 55875);
+    // 258.75 + 150.00 + 150.00 = 558.75 COGS
+    assert.equal(lineItem.sellingPriceCents, 97781); // round(55875 x 1.75) = round(97781.25) = 97781
   });
 
-  test("width/height are NOT rounded before the square-footage division", async () => {
+  test("width/height are NOT rounded before the square-footage division (COGS calculation)", async () => {
     const created = await addLineItem(quoteId);
     const { shutterRepriceResult } = await updateLineItem(created.id, baseInput({ width: 36.5, height: 60.25 }));
 
@@ -112,7 +116,7 @@ describe("Plantation Shutter square-foot pricing", () => {
     assert.ok(Math.abs(Number(shutterRepriceResult.snapshot?.squareFeet) - expectedSquareFeet) < 1e-5);
   });
 
-  test("internal dealer cost is NOT_CONFIGURED and profitability is unavailable for shutters", async () => {
+  test("shutters never get a matrix PricingSnapshot — their cost basis comes from the square-foot engine, not the matrix engine", async () => {
     const created = await addLineItem(quoteId);
     await updateLineItem(created.id, baseInput({ width: 36, height: 60 }));
 
@@ -120,11 +124,10 @@ describe("Plantation Shutter square-foot pricing", () => {
       where: { id: created.id },
       include: { currentPricingSnapshot: true },
     });
-    // No matrix pricing snapshot exists for a shutter — dealer cost has no source.
     assert.equal(dto.currentPricingSnapshot, null);
   });
 
-  test("a missing/inactive SquareFootPricingRule produces CONFIGURATION_ERROR, never a fabricated price", async () => {
+  test("a missing/inactive SquareFootPricingRule produces CONFIGURATION_ERROR COGS, never a fabricated price, and selling price stays NOT_CONFIGURED", async () => {
     const created = await addLineItem(quoteId);
 
     // Temporarily deactivate the rule to exercise the fail-closed path.
@@ -141,7 +144,7 @@ describe("Plantation Shutter square-foot pricing", () => {
     }
   });
 
-  test("17. a historical snapshot is unchanged after the configured rate is edited", async () => {
+  test("17. a historical COGS snapshot is unchanged after the configured rate is edited", async () => {
     const created = await addLineItem(quoteId);
     await updateLineItem(created.id, baseInput({ width: 36, height: 60 }));
 
@@ -155,8 +158,8 @@ describe("Plantation Shutter square-foot pricing", () => {
     await prisma.squareFootPricingRule.update({ where: { id: rule.id }, data: { ratePerSquareFootCents: 999999 } });
 
     try {
-      // ...the historical snapshot must NOT have changed, since nothing
-      // re-read or recomputed it.
+      // ...the historical COGS snapshot must NOT have changed, since
+      // nothing re-read or recomputed it.
       const stillHistorical = await prisma.squareFootPriceSnapshot.findUniqueOrThrow({ where: { id: historicalSnapshotId } });
       assert.equal(stillHistorical.totalCents, 25875);
       assert.equal(stillHistorical.appliedRatePerSquareFootCents, 1725);
@@ -177,7 +180,7 @@ describe("Plantation Shutter square-foot pricing", () => {
     const isolatedQuote = await createQuote({ customerId });
 
     const pricedItem = await addLineItem(isolatedQuote.id);
-    await updateLineItem(pricedItem.id, baseInput({ width: 36, height: 60 })); // $258.75
+    await updateLineItem(pricedItem.id, baseInput({ width: 36, height: 60 })); // Cash Price $452.81
 
     const unpricedItem = await addLineItem(isolatedQuote.id); // never given a product/price at all
 
@@ -185,7 +188,7 @@ describe("Plantation Shutter square-foot pricing", () => {
     const configuredPrices = allItems.filter((i) => i.sellingPriceStatus === "SET").map((i) => i.sellingPriceCents!);
     const unconfiguredCount = allItems.filter((i) => i.sellingPriceStatus === "NOT_CONFIGURED").length;
 
-    assert.equal(configuredPrices.reduce((a, b) => a + b, 0), 25875);
+    assert.equal(configuredPrices.reduce((a, b) => a + b, 0), 45281);
     assert.equal(unconfiguredCount, 1, "the never-priced item must be counted as unconfigured, not silently summed as $0");
 
     const unpricedPersisted = await prisma.quoteLineItem.findUniqueOrThrow({ where: { id: unpricedItem.id } });

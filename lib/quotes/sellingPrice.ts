@@ -43,19 +43,19 @@ export const NOT_CONFIGURED_UPDATE = {
  * snapshot is a SUCCESS) as the cost basis.
  *
  * Skipped entirely (line item left untouched) when sellingPriceMethod is
- * already MANUAL (a staff override — see setManualSellingPrice below) or
- * SQUARE_FOOT_FORMULA (set directly by lib/quotes/shutterPricing.ts,
- * which has its own cost-free formula; this function would otherwise
- * "correct" it back to NOT_CONFIGURED the moment it finds no
- * SellingPriceRule for a shutter product, since shutters don't use one).
+ * already MANUAL (a staff override — see setManualSellingPrice below).
  *
  * If a per-product/type/vendor SellingPriceRule resolves, it wins (as
  * before). Otherwise, falls back to the general approved cash/credit-card
  * formula (see docs/business-rules.md, lib/quotes/cashCreditPricing.ts) —
- * this only produces a price once the full cost basis (Cost of Goods +
- * Labor) is known; an incomplete cost basis or a resolved-but-uncomputable
- * rule both leave the line item explicitly NOT_CONFIGURED rather than
- * showing a stale price.
+ * this is now also how Plantation Shutter items get their customer price:
+ * lib/quotes/shutterPricing.ts only computes the shutter's internal Cost
+ * of Goods (square-foot rate + arch/cutout charges — no longer a customer
+ * price itself), and this function's cash/credit fallback turns that COGS
+ * into the actual Cash/Credit Card price, the same as it does with the
+ * matrix engine's dealer cost for Roller Shade / Neolux. An incomplete
+ * cost basis or a resolved-but-uncomputable rule both leave the line item
+ * explicitly NOT_CONFIGURED rather than showing a stale price.
  */
 export async function applyAutomaticSellingPrice(lineItemId: string): Promise<void> {
   const lineItem = await prisma.quoteLineItem.findUniqueOrThrow({
@@ -63,7 +63,7 @@ export async function applyAutomaticSellingPrice(lineItemId: string): Promise<vo
     include: { currentPricingSnapshot: true },
   });
 
-  if (lineItem.sellingPriceMethod === "MANUAL" || lineItem.sellingPriceMethod === "SQUARE_FOOT_FORMULA") return;
+  if (lineItem.sellingPriceMethod === "MANUAL") return;
 
   const rule = await resolveSellingPriceRuleForProduct(lineItem.productId);
   if (!rule) {

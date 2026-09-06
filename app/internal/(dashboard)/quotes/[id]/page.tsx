@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { toLineItemDTO } from "@/lib/quotes/dto";
 import { getKnownAddOnCostsCents } from "@/lib/quotes/fixedPriceOptions";
 import { calculateQuoteTotals } from "@/lib/quotes/totals";
+import { calculateQuoteInstallerMinimum } from "@/lib/quotes/installationPricing";
 import { QuoteEditor } from "@/components/internal/quotes/QuoteEditor";
 import type { QuoteHeaderDefaults } from "@/components/internal/quotes/QuoteHeaderForm";
 
@@ -43,11 +44,18 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ id
   ]);
 
   const lineItems = quote.lineItems.map((li) => toLineItemDTO(li, knownAddOnCostsCents));
+  const installerMinimum = await calculateQuoteInstallerMinimum(quote.id);
 
   const configuredSellingPrices = lineItems.filter((li) => li.sellingPriceStatus === "SET").map((li) => li.sellingPriceCents!);
   const unconfiguredCount = lineItems.length - configuredSellingPrices.length;
+  // The installer minimum trip fee (see docs/business-rules.md) is a
+  // quote-level charge, not tied to any one line item — its own Cash
+  // Price contribution (already run through the standard markup formula)
+  // is added into the subtotal the same way a priced line item's is.
   const totals = calculateQuoteTotals({
-    lineItemSellingPricesCents: configuredSellingPrices,
+    lineItemSellingPricesCents: installerMinimum.applies
+      ? [...configuredSellingPrices, installerMinimum.cashPriceCents!]
+      : configuredSellingPrices,
     discountType: quote.discountType,
     discountValue: quote.discountValue,
     taxRateBps: quote.taxRateBps,
@@ -86,6 +94,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ id
         fixedPriceOptions={fixedPriceOptions.map((o) => ({ id: o.id, name: o.name, category: o.category, costCents: o.costCents, status: o.status }))}
         totals={totals}
         unconfiguredSellingPriceCount={unconfiguredCount}
+        installerMinimum={installerMinimum}
       />
     </div>
   );

@@ -1,13 +1,24 @@
 import { formatCentsAsCurrency } from "@/lib/format";
 import type { QuoteTotalsResult } from "@/lib/quotes/totals";
+import type { QuoteInstallerMinimumResult } from "@/lib/quotes/installationPricing";
 
 /**
  * Customer-facing totals only — computed strictly from configured line-
- * item selling prices (see lib/quotes/totals.ts). Never derived from
- * dealer cost. When any line item's selling price is still NOT_CONFIGURED,
- * that's surfaced plainly rather than silently omitted from the count.
+ * item selling prices (see lib/quotes/totals.ts) plus the quote-level
+ * installer minimum trip fee when it applies (see
+ * lib/quotes/installationPricing.ts). Never derived from dealer cost.
+ * When any line item's selling price is still NOT_CONFIGURED, that's
+ * surfaced plainly rather than silently omitted from the count.
  */
-export function QuoteTotalsSummary({ totals, unconfiguredCount }: { totals: QuoteTotalsResult; unconfiguredCount: number }) {
+export function QuoteTotalsSummary({
+  totals,
+  unconfiguredCount,
+  installerMinimum,
+}: {
+  totals: QuoteTotalsResult;
+  unconfiguredCount: number;
+  installerMinimum: QuoteInstallerMinimumResult;
+}) {
   return (
     <div className="rounded-sm border border-charcoal/15 bg-warm-white p-5">
       <p className="mb-3 font-display text-lg text-charcoal">Quote Totals</p>
@@ -15,6 +26,14 @@ export function QuoteTotalsSummary({ totals, unconfiguredCount }: { totals: Quot
         <p className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
           {unconfiguredCount} line item{unconfiguredCount === 1 ? "" : "s"} still {unconfiguredCount === 1 ? "has" : "have"} an
           unconfigured selling price — totals below only include priced line items and are incomplete until every item is priced.
+        </p>
+      )}
+      {installerMinimum.applies && (
+        <p className="mb-3 rounded-sm border border-charcoal/10 bg-cream/40 px-3 py-2 text-[12px] text-charcoal-soft">
+          Job qualifies for the installer minimum trip fee ({installerMinimum.shadeCount} shade
+          {installerMinimum.shadeCount === 1 ? "" : "s"}, under 5) — {formatCentsAsCurrency(installerMinimum.minimumChargeCents)} added to
+          labor, included in the subtotal below (Cash: {formatCentsAsCurrency(installerMinimum.cashPriceCents)}, Credit Card:{" "}
+          {formatCentsAsCurrency(installerMinimum.creditCardPriceCents)}).
         </p>
       )}
       <dl className="grid grid-cols-2 gap-y-1.5 text-[13px]">

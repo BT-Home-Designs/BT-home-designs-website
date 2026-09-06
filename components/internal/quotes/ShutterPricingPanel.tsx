@@ -8,19 +8,19 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 /**
- * Plantation Shutter customer pricing — the square-foot-formula analogue
- * of PricingPanel, but for the customer-facing side. Shutter dealer/vendor
- * cost is deliberately NOT_CONFIGURED (see AGENTS.md / project history,
- * Phase 6: "do not assume vendor/dealer cost for shutters unless
- * separately supplied"), so this panel never shows an internal cost or
- * profit figure — those always read NOT CONFIGURED / NOT AVAILABLE here,
- * never a fabricated number.
+ * Plantation Shutter INTERNAL COST OF GOODS — the square-foot-formula
+ * analogue of PricingPanel's dealer-cost section, INTERNAL ONLY. Per
+ * docs/business-rules.md (confirmed Phase 7): the $17.25/sq ft rate and
+ * the arch/cutout charges are internal cost-of-goods inputs, not a
+ * customer price — the actual customer Cash/Credit Card price is shown in
+ * CustomerPricePanel, driven by lib/quotes/cashCreditPricing.ts running
+ * this COGS total through the standard markup formula.
  */
 export function ShutterPricingPanel({ snapshot }: { snapshot: SquareFootSnapshotDTO | null }) {
   if (!snapshot) {
     return (
       <div className="rounded-sm border border-charcoal/10 bg-cream/40 px-3 py-2.5 text-[12px] text-charcoal-soft">
-        Enter width and height to calculate shutter pricing.
+        Enter width and height to calculate shutter cost of goods.
       </div>
     );
   }
@@ -40,8 +40,8 @@ export function ShutterPricingPanel({ snapshot }: { snapshot: SquareFootSnapshot
   }
 
   return (
-    <div className="space-y-2 rounded-sm border border-oak/30 bg-oak-light/10 px-3 py-2.5 text-[12px]">
-      <p className="font-semibold uppercase tracking-wide text-oak-dark">Customer Price — Plantation Shutter</p>
+    <div className="space-y-2 rounded-sm border border-charcoal/15 bg-cream/50 px-3 py-2.5 text-[12px]">
+      <p className="font-semibold uppercase tracking-wide text-oak-dark">Internal Cost of Goods — Plantation Shutter</p>
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
         <dt className="text-charcoal-soft">Size</dt>
         <dd className="text-charcoal">
@@ -49,39 +49,29 @@ export function ShutterPricingPanel({ snapshot }: { snapshot: SquareFootSnapshot
         </dd>
         <dt className="text-charcoal-soft">Quantity</dt>
         <dd className="text-charcoal">{snapshot.quantity}</dd>
-        <dt className="font-medium text-charcoal-soft">Customer Base Sq Ft Price</dt>
+        <dt className="font-medium text-charcoal-soft">Base Sq Ft Cost</dt>
         <dd className="font-medium text-charcoal">{formatCentsAsCurrency(snapshot.perUnitBaseCents)}</dd>
         {(snapshot.archPanelCount ?? 0) > 0 && (
           <>
-            <dt className="text-charcoal-soft">Arch Charges ({snapshot.archPanelCount} panel{snapshot.archPanelCount === 1 ? "" : "s"})</dt>
+            <dt className="text-charcoal-soft">Arch Cost ({snapshot.archPanelCount} panel{snapshot.archPanelCount === 1 ? "" : "s"})</dt>
             <dd className="text-charcoal">{formatCentsAsCurrency(snapshot.archChargeTotalCents)}</dd>
           </>
         )}
         {(snapshot.doorCutoutCount ?? 0) > 0 && (
           <>
-            <dt className="text-charcoal-soft">Door Cutout Charges ({snapshot.doorCutoutCount} cutout{snapshot.doorCutoutCount === 1 ? "" : "s"})</dt>
+            <dt className="text-charcoal-soft">Door Cutout Cost ({snapshot.doorCutoutCount} cutout{snapshot.doorCutoutCount === 1 ? "" : "s"})</dt>
             <dd className="text-charcoal">{formatCentsAsCurrency(snapshot.doorCutoutChargeTotalCents)}</dd>
           </>
         )}
       </dl>
 
-      <div className="flex items-center justify-between border-t border-oak/20 pt-2 font-medium">
-        <span className="text-charcoal-soft">Customer Line Total</span>
+      <div className="flex items-center justify-between border-t border-charcoal/10 pt-2 font-medium">
+        <span className="text-charcoal-soft">Total Cost of Goods</span>
         <span className="text-charcoal">{formatCentsAsCurrency(snapshot.totalCents)}</span>
       </div>
-
-      <div className="space-y-1 border-t border-charcoal/10 pt-2">
-        <div className="flex items-center justify-between">
-          <span className="text-charcoal-soft">Internal Dealer Cost</span>
-          <span className="font-medium text-amber-700">NOT CONFIGURED</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-charcoal-soft">Gross Profit / Margin</span>
-          <span className="font-medium text-amber-700">NOT AVAILABLE</span>
-        </div>
-      </div>
       <p className="pt-1 text-[10px] text-charcoal-soft/70">
-        Rate {formatCentsAsCurrency(snapshot.appliedRatePerSquareFootCents)}/sq ft · vendor/dealer cost for shutters has not been supplied.
+        Rate {formatCentsAsCurrency(snapshot.appliedRatePerSquareFootCents)}/sq ft — internal cost input, not the customer price. See Customer
+        Price below.
       </p>
     </div>
   );

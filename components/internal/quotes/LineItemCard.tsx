@@ -6,6 +6,7 @@ import { isMatrixSupportedProductType } from "@/lib/quotes/matrixSupportedProduc
 import { isShutterSupportedProductType } from "@/lib/quotes/shutterSupportedProductTypes";
 import { PricingPanel } from "./PricingPanel";
 import { ShutterPricingPanel } from "./ShutterPricingPanel";
+import { CashCreditBreakdownPanel } from "./CashCreditBreakdownPanel";
 import { CustomerPricePanel } from "./CustomerPricePanel";
 import {
   updateLineItemAction,
@@ -462,6 +463,12 @@ export function LineItemCard({
         )}
         <CustomerPricePanel item={item} quoteId={quoteId} onSaved={onSaved} />
       </div>
+
+      {(isShutterProduct || isMatrixProduct) && (
+        <div className="mt-3">
+          <CashCreditBreakdownPanel snapshot={item.currentCashCreditSnapshot} />
+        </div>
+      )}
 
       <div className="mt-3 flex items-center justify-between">
         <div className="text-[11px]">
