@@ -15,7 +15,6 @@ const navLinks = [
   { label: "Home", href: "/" },
   { label: "Gallery", href: "/gallery" },
   { label: "About", href: "/about" },
-  { label: "Warranty & Service", href: "/warranty" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -72,7 +71,6 @@ export function Navbar() {
           <NavLink href="/gallery" label="Gallery" active={pathname === "/gallery"} />
           <NavDropdown label="Service Area" items={cityItems} viewAllHref="/service-area" viewAllLabel="View all cities" />
           <NavLink href="/about" label="About" active={pathname === "/about"} />
-          <NavLink href="/warranty" label="Warranty" active={pathname === "/warranty"} />
           <NavLink href="/contact" label="Contact" active={pathname === "/contact"} />
         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Check, Loader2, Upload, Video, X } from "lucide-react";
+import { Check, Loader2, Upload, X } from "lucide-react";
 import { Button } from "./Button";
 import { business } from "@/lib/data/business";
 import { trackLead } from "@/lib/analytics";
@@ -32,15 +32,16 @@ const ISSUE_TYPES = [
 const CONTACT_METHODS = ["Text", "Phone", "Email"];
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
-const MAX_PHOTOS = 4;
+const MAX_PHOTOS = 5;
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
-const MAX_VIDEO_BYTES = 4 * 1024 * 1024;
-// Combined cap across every attached file. Kept conservative because these
+// Combined cap across every attached photo. Kept conservative because these
 // are delivered as real email attachments through a serverless function
 // with a limited request-body size — see app/api/warranty/route.ts for the
-// full explanation.
+// full explanation. Video upload was deliberately left out of this form —
+// normal smartphone video can't reliably fit under that ceiling without a
+// separate storage service, so the form asks for photos only and BT Home
+// Designs requests a video directly if one turns out to be needed.
 const MAX_TOTAL_BYTES = 4 * 1024 * 1024;
 
 function formatBytes(bytes: number): string {
@@ -77,7 +78,6 @@ const initialState: FormState = {
 export function WarrantyServiceForm() {
   const [form, setForm] = useState<FormState>(initialState);
   const [photos, setPhotos] = useState<File[]>([]);
-  const [video, setVideo] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -89,7 +89,7 @@ export function WarrantyServiceForm() {
     setForm((f) => ({ ...f, [key]: value }));
   };
 
-  const totalBytes = photos.reduce((sum, f) => sum + f.size, 0) + (video?.size ?? 0);
+  const totalBytes = photos.reduce((sum, f) => sum + f.size, 0);
   const remainingBytes = Math.max(0, MAX_TOTAL_BYTES - totalBytes);
 
   const handlePhotoSelect = (fileList: FileList | null) => {
@@ -122,26 +122,6 @@ export function WarrantyServiceForm() {
 
     if (accepted.length > 0) setPhotos((p) => [...p, ...accepted]);
     setFileError(rejected.length > 0 ? `Some files weren't added: ${rejected.join(", ")}.` : null);
-  };
-
-  const handleVideoSelect = (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
-    const file = fileList[0];
-    if (!ACCEPTED_VIDEO_TYPES.includes(file.type)) {
-      setFileError(`${file.name}: use MP4, MOV, or WEBM for video.`);
-      return;
-    }
-    if (file.size > MAX_VIDEO_BYTES) {
-      setFileError(`${file.name} is over the ${formatBytes(MAX_VIDEO_BYTES)} video limit.`);
-      return;
-    }
-    const totalWithoutCurrentVideo = photos.reduce((sum, f) => sum + f.size, 0);
-    if (totalWithoutCurrentVideo + file.size > MAX_TOTAL_BYTES) {
-      setFileError(`Adding this video would exceed the ${formatBytes(MAX_TOTAL_BYTES)} total attachment limit. Remove a photo first, or attach a smaller clip.`);
-      return;
-    }
-    setFileError(null);
-    setVideo(file);
   };
 
   const canSubmit = Boolean(
@@ -177,7 +157,6 @@ export function WarrantyServiceForm() {
       body.append("website", form.website);
       body.append("sourcePage", sourcePage);
       for (const photo of photos) body.append("photos", photo);
-      if (video) body.append("video", video);
 
       const res = await fetch("/api/warranty", { method: "POST", body });
       if (!res.ok) {
@@ -347,11 +326,14 @@ export function WarrantyServiceForm() {
 
       <div>
         <p className="mb-1.5 block text-[12px] font-medium text-charcoal-soft">Photos (optional, up to {MAX_PHOTOS})</p>
+        <p className="mb-2 text-[12.5px] leading-relaxed text-charcoal-soft">
+          Please upload clear photos showing the issue. If a video is needed, BT Home Designs will request one.
+        </p>
         <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border-2 border-dashed border-charcoal/20 px-6 py-8 text-center transition-colors hover:border-oak-dark">
           <Upload className="h-5 w-5 text-oak-dark" strokeWidth={1.5} aria-hidden="true" />
           <span className="text-[13px] text-charcoal-soft">Click to upload photos, or drag files here</span>
           <span className="text-[11px] text-charcoal-soft/70">
-            JPG, PNG, or WEBP · up to {formatBytes(MAX_PHOTO_BYTES)} each · {formatBytes(remainingBytes)} remaining of a {formatBytes(MAX_TOTAL_BYTES)} total (photos + video)
+            JPG, PNG, or WEBP · up to {formatBytes(MAX_PHOTO_BYTES)} each · {formatBytes(remainingBytes)} remaining of a {formatBytes(MAX_TOTAL_BYTES)} total
           </span>
           <input
             type="file"
@@ -381,37 +363,6 @@ export function WarrantyServiceForm() {
               </li>
             ))}
           </ul>
-        )}
-      </div>
-
-      <div>
-        <p className="mb-1.5 block text-[12px] font-medium text-charcoal-soft">Video (optional)</p>
-        {video ? (
-          <div className="flex items-center justify-between rounded-sm bg-cream px-4 py-3 text-[12px] text-charcoal-soft">
-            <span className="flex items-center gap-2 truncate pr-2">
-              <Video className="h-4 w-4 shrink-0 text-oak-dark" aria-hidden="true" />
-              {video.name} ({formatBytes(video.size)})
-            </span>
-            <button type="button" onClick={() => setVideo(null)} aria-label={`Remove ${video.name}`} className="shrink-0">
-              <X className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        ) : (
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border-2 border-dashed border-charcoal/20 px-6 py-8 text-center transition-colors hover:border-oak-dark">
-            <Video className="h-5 w-5 text-oak-dark" strokeWidth={1.5} aria-hidden="true" />
-            <span className="text-[13px] text-charcoal-soft">Click to upload a short video</span>
-            <span className="text-[11px] text-charcoal-soft/70">MP4, MOV, or WEBM · up to {formatBytes(MAX_VIDEO_BYTES)}</span>
-            <input
-              type="file"
-              accept={ACCEPTED_VIDEO_TYPES.join(",")}
-              className="hidden"
-              aria-label="Upload video"
-              onChange={(e) => {
-                handleVideoSelect(e.target.files);
-                e.target.value = "";
-              }}
-            />
-          </label>
         )}
       </div>
 

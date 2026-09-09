@@ -6,8 +6,8 @@ import { randomUUID } from "crypto";
  *
  * Standalone route for the /warranty page's service/warranty request form.
  * Kept separate from app/api/quote/route.ts (rather than merged in) since
- * this form accepts real file uploads (photos/video as attachments) while
- * the quote/contact forms only ever send photo file *names*.
+ * this form accepts real file uploads (photos as attachments) while the
+ * quote/contact forms only ever send photo file *names*.
  *
  * Reuses the exact same delivery mechanism already wired up for leads:
  * Resend (https://resend.com), gated behind RESEND_API_KEY and
@@ -16,10 +16,10 @@ import { randomUUID } from "crypto";
  * success — see app/api/quote/route.ts for the same honest-failure
  * rationale.
  *
- * File attachments: photos and an optional video are sent as real Resend
- * email attachments (base64-encoded), not just file names. Resend accepts
- * up to ~40MB per email, but the practical ceiling here is set much lower
- * — MAX_TOTAL_ATTACHMENTS_BYTES below — because the default Node.js
+ * File attachments: photos are sent as real Resend email attachments
+ * (base64-encoded), not just file names. Resend accepts up to ~40MB per
+ * email, but the practical ceiling here is set much lower —
+ * MAX_TOTAL_ATTACHMENTS_BYTES below — because the default Node.js
  * Serverless Function payload limit on Vercel (this project's documented
  * deploy target, see README.md) is ~4.5MB per request, and this request
  * body is raw multipart (no base64 inflation) plus a handful of text
@@ -27,6 +27,13 @@ import { randomUUID } from "crypto";
  * self-hosted Node server, a Vercel plan with a higher limit, etc.), this
  * constant can be raised — attachments over that size will otherwise
  * simply never reach this route.
+ *
+ * Video upload was deliberately left out: a normal smartphone video can't
+ * reliably fit under the ~4.5MB ceiling above, and supporting it properly
+ * would mean adding a paid storage/upload service this project intentionally
+ * avoids. The form only requests photos; if a video turns out to be needed
+ * for a specific request, BT Home Designs asks the customer for it directly
+ * (e.g. by reply email or text) rather than the website collecting it.
  *
  * Spam protection: a honeypot field (same pattern as app/api/quote), plus
  * a best-effort in-memory rate limit per IP. That limiter resets whenever
@@ -77,12 +84,10 @@ const ISSUE_TYPES = [
 const CONTACT_METHODS = ["Text", "Phone", "Email"];
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
-const MAX_PHOTOS = 4;
+const MAX_PHOTOS = 5;
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024; // 3MB per photo
-const MAX_VIDEO_BYTES = 4 * 1024 * 1024; // 4MB for the single optional video
-// Combined cap across every attached file — see file header for why.
+// Combined cap across every attached photo — see file header for why.
 const MAX_TOTAL_ATTACHMENTS_BYTES = 4 * 1024 * 1024;
 const MAX_FILENAME_LENGTH = 200;
 
@@ -244,8 +249,6 @@ export async function POST(request: Request) {
 
     // --- Attachments ---
     const photoFiles = formData.getAll("photos").filter((v): v is File => v instanceof File && v.size > 0);
-    const videoEntry = formData.get("video");
-    const videoFile = videoEntry instanceof File && videoEntry.size > 0 ? videoEntry : null;
 
     if (photoFiles.length > MAX_PHOTOS) {
       return NextResponse.json({ error: `A maximum of ${MAX_PHOTOS} photos can be attached.` }, { status: 400 });
@@ -258,20 +261,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `"${file.name}" is over the ${formatBytes(MAX_PHOTO_BYTES)} limit per photo.` }, { status: 400 });
       }
     }
-    if (videoFile) {
-      if (!ACCEPTED_VIDEO_TYPES.includes(videoFile.type)) {
-        return NextResponse.json({ error: `"${videoFile.name}" isn't a supported video type. Use MP4, MOV, or WEBM.` }, { status: 400 });
-      }
-      if (videoFile.size > MAX_VIDEO_BYTES) {
-        return NextResponse.json({ error: `The video is over the ${formatBytes(MAX_VIDEO_BYTES)} limit.` }, { status: 400 });
-      }
-    }
 
-    const allFiles = [...photoFiles, ...(videoFile ? [videoFile] : [])];
-    const totalBytes = allFiles.reduce((sum, f) => sum + f.size, 0);
+    const totalBytes = photoFiles.reduce((sum, f) => sum + f.size, 0);
     if (totalBytes > MAX_TOTAL_ATTACHMENTS_BYTES) {
       return NextResponse.json(
-        { error: `Attachments must total ${formatBytes(MAX_TOTAL_ATTACHMENTS_BYTES)} or less. Please remove or compress a file and try again.` },
+        { error: `Photos must total ${formatBytes(MAX_TOTAL_ATTACHMENTS_BYTES)} or less. Please remove one and try again.` },
         { status: 400 }
       );
     }
@@ -299,19 +293,13 @@ export async function POST(request: Request) {
 
     try {
       const attachments = await Promise.all(
-        allFiles.map(async (file) => {
+        photoFiles.map(async (file) => {
           const buffer = Buffer.from(await file.arrayBuffer());
           return { filename: sanitizeFilename(file.name), content: buffer.toString("base64") };
         })
       );
 
-      const attachmentSummary =
-        [
-          photoFiles.length > 0 ? `${photoFiles.length} photo(s) attached` : null,
-          videoFile ? "1 video attached" : null,
-        ]
-          .filter(Boolean)
-          .join(", ") || "None";
+      const attachmentSummary = photoFiles.length > 0 ? `${photoFiles.length} photo(s) attached` : "None";
 
       const leadName = typeof submission.name === "string" ? submission.name : "Website Visitor";
       const productLabel = typeof submission.productType === "string" ? submission.productType : "Warranty/Service";

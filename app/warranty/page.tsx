@@ -4,6 +4,7 @@ import { MessageSquare, Search, ShieldCheck } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SectionHeading } from "@/components/SectionHeading";
 import { WarrantyServiceForm } from "@/components/WarrantyServiceForm";
+import { Button } from "@/components/Button";
 
 export const metadata: Metadata = {
   title: "Warranty & Service",
@@ -12,21 +13,27 @@ export const metadata: Metadata = {
   alternates: { canonical: "/warranty" },
 };
 
+// Anchor for the request form below. Keep this stable — it's referenced
+// from printed materials (e.g. a warranty guide QR code pointing to
+// /warranty#service-request) as well as the "Request Warranty or Service
+// Help" button near the top of this page.
+const FORM_ANCHOR = "service-request";
+
 const steps = [
   {
     icon: MessageSquare,
     title: "Tell Us What's Happening",
-    copy: "Describe the issue and, if you can, include a few photos or a short video — it helps us understand the problem before we even call you.",
+    copy: "Describe the issue and include a few clear photos — it helps us understand the problem before we even call you.",
   },
   {
     icon: Search,
     title: "We Review Your Request",
-    copy: "Our team looks at the product, the reported issue, and the applicable warranty coverage for what was installed.",
+    copy: "Our team looks at the product, the reported issue, and the applicable manufacturer warranty for what was installed.",
   },
   {
     icon: ShieldCheck,
     title: "We Follow Up With Next Steps",
-    copy: "We'll reach out to confirm the path forward — whether that's a warranty repair, a service visit, or more information we need from you.",
+    copy: "We'll reach out to confirm the path forward — whether that's a manufacturer warranty claim, a service visit, or more information we need from you.",
   },
 ];
 
@@ -37,10 +44,13 @@ export default function WarrantyPage() {
         <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Warranty & Service" }]} />
         <SectionHeading
           eyebrow="Warranty & Service"
-          title="We stand behind what we install"
-          copy="Manufacturer warranty coverage varies by product line, and exact terms are provided with your paperwork at the time of purchase and installation. If a shutter, shade, or drapery isn't operating the way it should, let us know below — our team will review the details and help determine the right path forward, whether that's a manufacturer warranty claim, a service adjustment, or a repair visit."
+          title="Warranty & Service Support"
+          copy="If a shutter, shade, or drapery installed by BT Home Designs isn't working the way it should, contact us first. Coverage for the product itself comes from the manufacturer's warranty — terms vary by product line and are provided with your paperwork at installation. Submit the details below and BT Home Designs will review your request and help determine the appropriate next step."
           className="mt-8 max-w-3xl"
         />
+        <Button href={`#${FORM_ANCHOR}`} className="mt-8">
+          Request Warranty or Service Help
+        </Button>
       </div>
 
       <div className="container-lux mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
@@ -55,7 +65,7 @@ export default function WarrantyPage() {
         ))}
       </div>
 
-      <div className="container-lux mt-24" id="request-form">
+      <div className="container-lux mt-24 scroll-mt-28" id={FORM_ANCHOR}>
         <div className="mx-auto max-w-2xl">
           <h2 className="font-display text-3xl leading-[1.15] text-charcoal md:text-[2.25rem]">
             Request Warranty or Service Help
