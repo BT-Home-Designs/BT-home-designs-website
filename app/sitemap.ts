@@ -5,7 +5,7 @@ import { cities } from "@/lib/data/cities";
 const siteUrl = "https://www.bthomedesigns.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticRoutes = ["", "/about", "/services", "/gallery", "/quote", "/contact", "/service-area"].map((path) => ({
+  const staticRoutes = ["", "/about", "/services", "/gallery", "/quote", "/contact", "/service-area", "/warranty"].map((path) => ({
     url: `${siteUrl}${path}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,

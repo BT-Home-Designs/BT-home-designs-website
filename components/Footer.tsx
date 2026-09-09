@@ -122,6 +122,7 @@ export function Footer() {
             <Link href="/about" className="hover:text-warm-white/70">About</Link>
             <Link href="/gallery" className="hover:text-warm-white/70">Gallery</Link>
             <Link href="/quote" className="hover:text-warm-white/70">Request a Quote</Link>
+            <Link href="/warranty" className="hover:text-warm-white/70">Warranty &amp; Service</Link>
             <Link href="/contact" className="hover:text-warm-white/70">Contact</Link>
           </div>
         </div>
