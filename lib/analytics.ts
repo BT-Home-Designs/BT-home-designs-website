@@ -4,7 +4,7 @@
  * components/Analytics.tsx). Safe to call unconditionally from a form's
  * submit handler; it's a no-op when analytics isn't configured.
  */
-export function trackLead(formName: "quote" | "contact") {
+export function trackLead(formName: "quote" | "contact" | "warranty") {
   if (typeof window === "undefined") return;
   const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
   if (typeof gtag !== "function") return;

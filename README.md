@@ -4,8 +4,8 @@ A production-ready marketing and lead-generation website for BT Home Designs, a 
 
 ## Overview
 
-- 36 statically generated pages: homepage, about, contact, gallery, quote, a services index + 7 individual service pages, and a service-area index + 15 individual city pages
-- A multi-step quote request form and a contact form, both posting to a single API route
+- 37 statically generated pages: homepage, about, contact, gallery, quote, warranty, a services index + 7 individual service pages, and a service-area index + 15 individual city pages
+- A multi-step quote request form and a contact form, both posting to a single API route; a separate warranty/service request form (with real photo/video attachments) posting to its own route
 - SEO baked in: per-page metadata, Open Graph/Twitter cards, JSON-LD (LocalBusiness, Service, Breadcrumb), a dynamic `sitemap.xml`, and `robots.txt`
 - All editable business details (phone, address, hours, social links, policies) centralized in one file: `lib/data/business.ts`
 - No photography yet — every image slot uses a designed CSS placeholder (`components/ImagePlaceholder.tsx`) so the site is fully navigable and looks finished before real photos are supplied
@@ -75,11 +75,13 @@ app/
   contact/page.tsx
   gallery/page.tsx
   quote/page.tsx
+  warranty/page.tsx           Warranty & service request page
   services/page.tsx           Services index
   services/[slug]/page.tsx    Single template rendering all 7 services
   service-area/page.tsx       Service-area index
   service-area/[slug]/page.tsx  Single template rendering all 15 cities
-  api/quote/route.ts          Form submission endpoint (see "Quote and Contact Forms")
+  api/quote/route.ts          Quote/contact form submission endpoint (see "Quote and Contact Forms")
+  api/warranty/route.ts       Warranty/service form submission endpoint (see "Warranty & Service Form")
 components/                 All reusable UI (Navbar, Footer, forms, gallery, etc.)
 lib/
   data/business.ts          Single source of truth for business info
@@ -156,6 +158,16 @@ Same pattern as services: `lib/data/cities.ts` is the single data source, render
 - The Quote form captures `sourcePage` (the referring page, e.g. a specific service or city page) so leads can be attributed to whatever page generated them.
 - **Delivery is implemented via [Resend](https://resend.com), gated entirely behind environment variables.** If `RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` are both set, a valid submission sends a real email from a verified sender (`leads@mail.bthomedesigns.com`, on the verified `mail.bthomedesigns.com` sending domain) to that inbox, with all submitted details (name, contact info, city, ZIP code, requested service, message, source page, available UTM parameters, timestamp, consent). Reply-To is set to the customer's submitted email so replying goes straight to them. **If `RESEND_API_KEY` or `LEAD_NOTIFICATION_EMAIL` is unset, the route returns an honest `503` and the form displays that failure to the visitor — it never claims success when nothing was actually delivered.** See `.env.example` for the exact variable names.
 - **Photos are not uploaded.** The Quote form's photo step only sends selected file *names* as JSON metadata — no image bytes are transmitted anywhere. The UI tells the user this explicitly ("a team member will follow up separately to collect the actual images"). Client-side validation restricts selections to JPG/PNG/WEBP, 8MB per file, 10 files max, before they're even added to form state.
+
+## Warranty & Service Form
+
+`/warranty` has its own form (`components/WarrantyServiceForm.tsx`) posting to its own route (`app/api/warranty/route.ts`), kept separate from the quote/contact route because it actually uploads file bytes.
+
+- Required fields: customer name, email, phone, installation address, product type, issue type, description. Optional: approximate installation date, preferred contact method, up to 4 photos, and one short video.
+- **Photos and video are real email attachments**, not just file names — sent via the same Resend integration as the quote/contact forms (same `RESEND_API_KEY` / `LEAD_NOTIFICATION_EMAIL` env vars, no new account or service). Delivery is gated behind those two env vars exactly like `app/api/quote/route.ts`; until both are set, the route honestly reports itself unavailable.
+- **Attachment size limits are intentionally conservative**: JPG/PNG/WEBP photos up to 3MB each (max 4), an MP4/MOV/WEBM video up to 4MB, and — the binding constraint — every file combined must total 4MB or less. That combined cap exists because this form's request body is real file bytes, and the default Node.js Serverless Function payload limit on Vercel (this project's documented deploy target) is ~4.5MB per request. If the site is hosted somewhere without that ceiling, `MAX_TOTAL_ATTACHMENTS_BYTES` in the route (and the matching constant in the form component) can be raised — see the comment at the top of `app/api/warranty/route.ts`.
+- Spam protection: the same honeypot pattern used sitewide, plus a best-effort in-memory rate limit (5 submissions per 10 minutes per IP). That limiter resets whenever the serverless instance recycles — it isn't a durable store — but adds a real layer without introducing an external service like Upstash Redis.
+- Server-side validation re-checks everything the client already checks (required fields, email/phone format, product/issue type against the fixed option lists, file type/size/count/total) since a request can always bypass the browser UI.
 
 ## Connecting Production Storage
 
@@ -243,7 +255,7 @@ Everything below needs real information or a real account/credential before laun
 | Deposit policy wording | Generic placeholder sentence | `business.ts` -> `policies.deposit` |
 | Financing terms | Generic placeholder sentence, no specific rate/term claims | `business.ts` -> `policies.financing` |
 | Review count / average rating | `null` (not displayed or emitted in schema) | `business.ts` -> `reviews` |
-| Warranty language | `null` (not displayed anywhere) | `business.ts` -> `warranty` |
+| Warranty language | `null`, still unused — `/warranty` intentionally uses generic, non-committal copy ("coverage varies by product line...") instead, so no specific unconfirmed terms are asserted | `business.ts` -> `warranty`; copy lives directly in `app/warranty/page.tsx` |
 | Legal entity name | `"BT Home Designs LLC"` (unconfirmed) | `business.ts` -> `legalName` |
 | Testimonials | Empty — `Testimonials` component renders nothing until real, permissioned reviews are added | `lib/data/reviews.ts` (file header documents this) |
 | Homepage hero / About photos | Real licensed Unsplash stock photography (approved), not BT Home Designs project photos | `lib/data/media.ts` |
