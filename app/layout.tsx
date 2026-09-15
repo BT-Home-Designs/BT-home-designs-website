@@ -48,6 +48,9 @@ export const metadata: Metadata = {
   },
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
+  icons: {
+    icon: { url: "/favicon.png", type: "image/png" },
+  },
   // Google Search Console site verification — only emits the meta tag
   // when NEXT_PUBLIC_GSC_VERIFICATION is set. No token is invented here.
   ...(process.env.NEXT_PUBLIC_GSC_VERIFICATION
