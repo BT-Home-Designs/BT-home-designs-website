@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "./Button";
 import { business } from "@/lib/data/business";
@@ -183,8 +184,11 @@ export function ContactForm() {
           required
         />
         <span>
-          I agree to be contacted by BT Home Designs by phone, text, or email about my message. We won&apos;t
-          share your information with third parties for marketing purposes.
+          I agree to the BT Home Designs{" "}
+          <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-oak-dark">
+            Privacy Policy
+          </Link>
+          .
         </span>
       </label>
       {error && (

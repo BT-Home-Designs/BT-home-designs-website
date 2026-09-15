@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, Upload, X } from "lucide-react";
 import { services } from "@/lib/data/services";
@@ -458,8 +459,11 @@ export function QuoteForm() {
                     className="mt-0.5 h-4 w-4 shrink-0 accent-oak-dark"
                   />
                   <span>
-                    I agree to be contacted by BT Home Designs by phone, text, or email about this request. We
-                    won&apos;t share your information with third parties for marketing purposes.
+                    I agree to the BT Home Designs{" "}
+                    <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-oak-dark">
+                      Privacy Policy
+                    </Link>
+                    .
                   </span>
                 </label>
               </div>
