@@ -46,6 +46,7 @@ const onThisPage = [
   { href: "#valances", label: "Valances" },
   { href: "#other-products", label: "Other products" },
   { href: "#worksheet", label: "Worksheet" },
+  { href: "#send-measurements", label: "Send measurements" },
   { href: "#faq", label: "FAQ" },
 ];
 
@@ -57,8 +58,8 @@ const beforeYouStart = [
   },
   {
     icon: ClipboardList,
-    title: "Record everything in inches",
-    copy: "Write down exactly where the tape lands, fractions included — for example 35 ⅜, not \"about 35.\"",
+    title: "Record inches to the nearest ⅛",
+    copy: "Read the tape to the nearest ⅛ inch and write the fraction down — for example 35 ⅜, not \"about 35.\"",
   },
   {
     icon: Ruler,
@@ -84,15 +85,15 @@ const insideMountSteps = [
   },
   {
     title: "Measure the width in three places",
-    copy: "Take a width reading near the top, one in the middle, and one near the bottom of the opening. Write down all three.",
+    copy: "Take a width reading near the top, one in the middle, and one near the bottom of the opening, each to the nearest ⅛ inch. Write down all three — you don't need to pick one.",
   },
   {
     title: "Measure the height in three places",
-    copy: "Measure from the top inside edge of the opening down to the sill (the ledge the window sits on) on the left side, in the center, and on the right side. Write down all three.",
+    copy: "Measure from the top inside edge of the opening down to the sill (the ledge the window sits on) on the left side, in the center, and on the right side, each to the nearest ⅛ inch. Write down all three.",
   },
   {
     title: "Measure the depth",
-    copy: "Measure from the front edge of the opening straight back to the window frame or to the first thing that sticks out — a crank handle, lock, or alarm sensor. Note what the tape stopped at.",
+    copy: "Measure from the front edge of the opening straight back to the window frame or to the first thing that sticks out — a crank handle, lock, or alarm sensor. Note what the tape stopped at. There's no single depth that works for every product; we'll check it against the one you choose.",
   },
   {
     title: "Don't subtract anything",
@@ -111,15 +112,19 @@ const outsideMountSteps = [
   },
   {
     title: "Measure the height",
-    copy: "Measure from the top edge of the top trim down to the bottom edge of the lowest trim piece below the window.",
+    copy: "Measure from the top edge of the top trim down to the bottom of the lowest piece below the window. If there's a sill (a ledge that sticks out) or a strip of trim under the sill, measure all the way to the bottom of it.",
+  },
+  {
+    title: "Measure the sill, if it sticks out",
+    copy: "If the sill is wider than the trim, also measure the sill from end to end and note it.",
   },
   {
     title: "Don't add extra",
-    copy: "Record just the window and trim. BT Home Designs decides how far past the window the treatment should extend and exactly where it mounts.",
+    copy: "Record just the window, trim, and sill as they are. BT Home Designs confirms the final coverage and mounting position.",
   },
   {
-    title: "Photograph the whole wall",
-    copy: "Include the ceiling, nearby corners, and anything close to the window like light switches, vents, door frames, or furniture.",
+    title: "Photograph the full window and trim",
+    copy: "Take a straight-on photo showing the whole window, all of the trim, and the sill and trim below it. Step back far enough to include the ceiling, nearby corners, and anything close by like light switches, vents, or door frames.",
   },
 ];
 
@@ -134,7 +139,7 @@ const faqs = [
   },
   {
     q: "Should I round my measurements?",
-    a: "No. Write down exactly where the tape lands, including the fraction, like 35 ⅜. Don't round up or down and don't subtract anything. Any rounding or adjustments are handled by BT Home Designs based on the product and manufacturer you choose.",
+    a: "Only to the nearest ⅛ inch — for example, write 35 ⅜ rather than 35 or 35 ½. Don't round to whole or half inches, and don't add or subtract anything. Any sizing adjustments are handled by BT Home Designs based on the product and manufacturer you choose.",
   },
   {
     q: "Are my measurements final?",
@@ -157,7 +162,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Get ready",
-      text: "Use a steel tape measure, record measurements in inches as width × height, label each window by room, and take a straight-on photo.",
+      text: "Use a steel tape measure, record measurements in inches to the nearest ⅛ inch as width × height, label each window by room, and take a straight-on photo.",
       url: `${business.urls.website}${PAGE_PATH}#before-you-start`,
     },
     {
@@ -203,8 +208,8 @@ export default function HowToMeasurePage() {
             <Button href="/quote" size="lg" className="w-full sm:w-auto">
               Request a Quote
             </Button>
-            <Button href="#worksheet" size="lg" variant="secondary" icon={false} className="w-full sm:w-auto">
-              Open the Worksheet
+            <Button href="#send-measurements" size="lg" variant="secondary" icon={false} className="w-full sm:w-auto">
+              Send Your Measurements
             </Button>
           </div>
 
@@ -329,11 +334,12 @@ export default function HowToMeasurePage() {
               className="mt-10"
               src={img("outside-mount")}
               width={560}
-              height={440}
-              alt="Front view of a window with trim. Width A is measured from the outside edge of the trim on the left to the outside edge on the right. Height B is measured from the top edge of the top trim to the bottom edge of the bottom trim."
+              height={470}
+              alt="Front view of a window with trim, a sill, and a trim piece below the sill. Width A is measured from the outside edge of the trim on the left to the outside edge on the right. Height B is measured from the top edge of the top trim to the bottom of the trim below the sill. C is the sill width from end to end."
               legend={[
                 ["A", "Width, outside edge to outside edge of the trim"],
-                ["B", "Height, top of the top trim to bottom of the lowest trim"],
+                ["B", "Height, top of the top trim to the bottom of the lowest piece (sill or trim below it)"],
+                ["C", "Sill width, end to end — only if it sticks out past the trim"],
               ]}
             />
           </div>
@@ -379,7 +385,8 @@ export default function HowToMeasurePage() {
           <div className="mt-12">
             <h3 className="text-2xl text-charcoal md:text-3xl">If no rod or track is installed yet</h3>
             <p className="mt-4 text-[15px] leading-relaxed text-charcoal-soft">
-              Record these four measurements for each window or door, plus a straight-on photo:
+              Record these four measurements for each window or door to the nearest ⅛ inch, note whether the floor is
+              carpet or hard flooring, and take a straight-on photo:
             </p>
             <Diagram
               className="mt-8"
@@ -399,8 +406,9 @@ export default function HowToMeasurePage() {
           <div className="mt-14">
             <h3 className="text-2xl text-charcoal md:text-3xl">If a rod or track is already installed</h3>
             <p className="mt-4 text-[15px] leading-relaxed text-charcoal-soft">
-              Record these two measurements and send a photo of the hardware — close enough to see the brackets and
-              rings — along with a photo of the whole window. Let us know whether you plan to keep that rod or track.
+              Record these two measurements, note whether the floor is carpet or hard flooring, and take a photo of the
+              hardware — close enough to see the brackets and rings — along with a photo of the whole window. Let us
+              know whether you plan to keep that rod or track.
             </p>
             <Diagram
               className="mt-8"
@@ -457,21 +465,22 @@ export default function HowToMeasurePage() {
             <div>
               <h3 className="text-2xl text-charcoal">Outside mount</h3>
               <p className="mt-3 text-[15px] leading-relaxed text-charcoal-soft">
-                Measure the window including its trim, using the{" "}
+                Measure and photograph the full window and trim — including any sill or trim below it — using the{" "}
                 <a href="#outside-mount" className="font-medium text-oak-dark underline-offset-2 hover:underline">
                   outside mount steps
                 </a>
-                , and send a photo. BT Home Designs will determine the final coverage and mounting placement.
+                . BT Home Designs confirms the final coverage and mounting position.
               </p>
               <Diagram
                 className="mt-6"
                 src={img("outside-mount")}
                 width={560}
-                height={440}
-                alt="Window with trim for a Roman shade outside mount. Width A is measured across the outside edges of the trim and height B from the top of the top trim to the bottom of the bottom trim."
+                height={470}
+                alt="Window with trim and sill for a Roman shade outside mount. Width A is measured across the outside edges of the trim, height B from the top of the top trim to the bottom of the trim below the sill, and C is the sill width."
                 legend={[
                   ["A", "Width including trim"],
-                  ["B", "Height including trim"],
+                  ["B", "Height including trim, sill, and any trim below it"],
+                  ["C", "Sill width, if it sticks out past the trim"],
                 ]}
               />
             </div>
@@ -520,7 +529,7 @@ export default function HowToMeasurePage() {
           <SectionHeading eyebrow="By Product" title="Shades, blinds, shutters, and exterior shades" />
           <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="rounded-sm border border-charcoal/10 bg-cream p-6">
-              <h3 className="font-display text-xl text-charcoal">Roller shades, zebra shades, woven woods, and blinds</h3>
+              <h3 className="font-display text-xl text-charcoal">Blinds, roller shades, zebra shades, and woven woods</h3>
               <p className="mt-3 text-[14px] leading-relaxed text-charcoal-soft">
                 For a rough estimate, use the general{" "}
                 <a href="#inside-mount" className="font-medium text-oak-dark underline-offset-2 hover:underline">
@@ -530,8 +539,8 @@ export default function HowToMeasurePage() {
                 <a href="#outside-mount" className="font-medium text-oak-dark underline-offset-2 hover:underline">
                   outside mount
                 </a>{" "}
-                steps and include a photo. Sizing rules for these products differ by manufacturer, so we confirm every
-                detail at a professional measure before ordering.
+                steps and include a photo. We don&apos;t publish separate sizing rules for these products because they
+                differ by manufacturer — we confirm every detail at a professional measure before ordering.
               </p>
             </div>
             <div className="rounded-sm border border-oak/40 bg-warm-white p-6">
@@ -571,7 +580,7 @@ export default function HowToMeasurePage() {
           <SectionHeading
             eyebrow="Step 4"
             title="Your measurement worksheet"
-            copy="Fill it in on your phone as you go, or print it and write in the blanks. Use one entry per window."
+            copy="Fill it in on your phone as you go, or print it and write in the blanks. Use one entry per window. When you're done, send it and your photos to us with the form at the bottom."
           />
           <div className="mt-10">
             <MeasurementWorksheet />
@@ -594,16 +603,15 @@ export default function HowToMeasurePage() {
         <div className="container-lux max-w-3xl!">
           <h2 className="text-3xl text-warm-white md:text-4xl">Send us your measurements for an estimate</h2>
           <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-warm-white/75">
-            Start a quote request and tell us what you&apos;re considering. A short summary in the &quot;Approximate
-            Sizes&quot; field is plenty — when we follow up, we&apos;ll collect your full worksheet and photos and prepare
-            your preliminary quote.
+            Use the form under the worksheet to send every window and your photos straight to us — we&apos;ll review them
+            and follow up with a preliminary quote. Rather not measure? Request a quote and we&apos;ll measure for you.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button href="/quote" size="lg" variant="accent" className="w-full sm:w-auto">
-              Request a Quote
+            <Button href="#send-measurements" size="lg" variant="accent" className="w-full sm:w-auto">
+              Send Your Measurements
             </Button>
-            <Button href="/contact" size="lg" variant="light" icon={false} className="w-full sm:w-auto">
-              Ask a Question
+            <Button href="/quote" size="lg" variant="light" icon={false} className="w-full sm:w-auto">
+              Request a Quote
             </Button>
           </div>
           <p className="mx-auto mt-10 max-w-xl text-[13px] leading-relaxed text-warm-white/55">

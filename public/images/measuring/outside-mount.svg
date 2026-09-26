@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 440" width="560" height="440" role="img" aria-labelledby="t d">
-  <title id="t">Outside mount: measure the window including its trim</title>
-  <desc id="d">Front view of a window with trim. Width A runs from the outside edge of the trim on the left to the outside edge on the right. Height B runs from the top edge of the top trim to the bottom edge of the bottom trim.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 470" width="560" height="470" role="img" aria-labelledby="t d">
+  <title id="t">Outside mount: measure the full window, trim, and sill</title>
+  <desc id="d">Front view of a window with trim, a sill ledge, and a trim piece below the sill. Width A runs from the outside edge of the trim on the left to the outside edge on the right. Height B runs from the top edge of the top trim down to the bottom of the lowest piece below the window. C is the width of the sill from end to end, where it sticks out past the trim.</desc>
   <defs>
     <marker id="arw" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 Z" fill="#7d5a3a"/>
@@ -14,22 +14,28 @@
       .badge-t { font-size: 22px; font-weight: 700; fill: #ffffff; }
     </style>
   </defs>
-  <rect width="560" height="440" rx="16" fill="#faf7f2"/>
-  <rect x="20" y="20" width="520" height="400" rx="8" fill="#f1e9dd"/>
-  <rect x="130" y="90" width="260" height="270" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
-  <rect x="154" y="114" width="212" height="222" fill="#d8c8b0" stroke="#2a2622" stroke-width="2"/>
-  <rect x="170" y="130" width="180" height="190" fill="#dfe8e6" stroke="#2a2622" stroke-width="2"/>
-  <path d="M154 114 L170 130 M366 114 L350 130 M154 336 L170 320 M366 336 L350 320" stroke="#2a2622" stroke-width="1.5"/>
-  <line x1="170" y1="225" x2="350" y2="225" stroke="#2a2622" stroke-width="4"/>
-  <line class="ext" x1="130" y1="90" x2="130" y2="44"/>
-  <line class="ext" x1="390" y1="90" x2="390" y2="44"/>
+  <rect width="560" height="470" rx="16" fill="#faf7f2"/>
+  <rect x="20" y="20" width="520" height="420" rx="8" fill="#f1e9dd"/>
+  <rect x="130" y="84" width="260" height="250" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
+  <rect x="154" y="108" width="212" height="202" fill="#d8c8b0" stroke="#2a2622" stroke-width="2"/>
+  <rect x="170" y="124" width="180" height="170" fill="#dfe8e6" stroke="#2a2622" stroke-width="2"/>
+  <path d="M154 108 L170 124 M366 108 L350 124 M154 310 L170 294 M366 310 L350 294" stroke="#2a2622" stroke-width="1.5"/>
+  <line x1="170" y1="209" x2="350" y2="209" stroke="#2a2622" stroke-width="4"/>
+  <rect x="112" y="334" width="296" height="16" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
+  <rect x="144" y="350" width="232" height="24" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
+  <line class="ext" x1="130" y1="84" x2="130" y2="44"/>
+  <line class="ext" x1="390" y1="84" x2="390" y2="44"/>
   <line class="dim" x1="130" y1="56" x2="390" y2="56"/>
   <circle cx="260" cy="56" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
   <text class="badge-t" x="260" y="64" text-anchor="middle">A</text>
-  <line class="ext" x1="390" y1="90" x2="462" y2="90"/>
-  <line class="ext" x1="390" y1="360" x2="462" y2="360"/>
-  <line class="dim" x1="450" y1="90" x2="450" y2="360"/>
-  <circle cx="450" cy="225" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
-  <text class="badge-t" x="450" y="233" text-anchor="middle">B</text>
-  <text class="lbl" x="280" y="398" text-anchor="middle">Measure to the outside edges of the trim</text>
+  <line class="ext" x1="390" y1="84" x2="470" y2="84"/>
+  <line class="ext" x1="376" y1="374" x2="470" y2="374"/>
+  <line class="dim" x1="456" y1="84" x2="456" y2="374"/>
+  <circle cx="456" cy="229" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="456" y="237" text-anchor="middle">B</text>
+  <line class="ext" x1="112" y1="350" x2="112" y2="418"/>
+  <line class="ext" x1="408" y1="350" x2="408" y2="418"/>
+  <line class="dim" x1="112" y1="406" x2="408" y2="406"/>
+  <circle cx="260" cy="406" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="260" y="414" text-anchor="middle">C</text>
 </svg>

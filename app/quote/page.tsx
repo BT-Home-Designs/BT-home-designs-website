@@ -22,11 +22,11 @@ export default function QuotePage() {
           no-pressure in-home consultation.
         </p>
         <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-charcoal-soft">
-          Want to include rough sizes? Our{" "}
-          <Link href="/how-to-measure" className="font-medium text-oak-dark underline-offset-2 hover:underline">
-            how to measure guide
-          </Link>{" "}
-          shows what to record — measuring is optional, and we confirm every measurement before ordering.
+          Already measured? You can send your full worksheet and window photos from our{" "}
+          <Link href="/how-to-measure#send-measurements" className="font-medium text-oak-dark underline-offset-2 hover:underline">
+            how to measure page
+          </Link>
+          . Measuring is optional — we confirm every measurement before ordering.
         </p>
       </div>
 

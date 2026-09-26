@@ -83,6 +83,7 @@ app/
   service-area/[slug]/page.tsx  Single template rendering all 15 cities
   api/quote/route.ts          Quote/contact form submission endpoint (see "Quote and Contact Forms")
   api/warranty/route.ts       Warranty/service form submission endpoint (see "Warranty & Service Form")
+  api/measurements/route.ts   How to Measure worksheet + photo submission endpoint (see "How to Measure Guide")
 components/                 All reusable UI (Navbar, Footer, forms, gallery, etc.)
 lib/
   data/business.ts          Single source of truth for business info
@@ -179,7 +180,8 @@ Same pattern as services: `lib/data/cities.ts` is the single data source, render
 
 - **Data collection only.** The page deliberately gives no deductions, overlap/stackback amounts, minimum depths, mounting heights, or rounding rules — those vary by product and manufacturer and are set at the professional measure. Keep it that way when editing.
 - **Diagrams** are hand-built SVGs in `public/images/measuring/` using the site palette. The letters (A, B, C…) and numbers in each diagram must match the legend lists next to it on the page; if you change an instruction, update both.
-- **Worksheet** (`components/MeasurementWorksheet.tsx`) stores entries only in the visitor's browser (localStorage) — nothing is submitted. "Print worksheet" prints just a table of filled rows plus blank rows (print CSS at the bottom of `app/globals.css`); "Copy as text" copies a plain-text summary for texting or emailing.
+- **Worksheet** (`components/MeasurementWorksheet.tsx`) keeps entries in the visitor's browser (localStorage) until they send them. "Print worksheet" prints just a table of filled rows plus blank rows (print CSS at the bottom of `app/globals.css`); "Copy as text" copies a plain-text summary. Option lists and field limits live in `lib/measuring.ts`, shared with the API route.
+- **Sending measurements** (`components/MeasurementSubmitForm.tsx` → `app/api/measurements/route.ts`): the customer sends every filled-in worksheet row plus up to 10 photos, each tagged with the window it shows. Photos are real uploads — downscaled in the browser to 1600px JPEGs first so phone photos fit under the 4MB combined cap (Vercel's ~4.5MB request limit). BT Home Designs receives one email via the same Resend setup as the other forms (`RESEND_API_KEY`, `LEAD_NOTIFICATION_EMAIL`): contact details, the worksheet as an HTML table and plain text, a CSV attachment, and each photo attached as `photo-01-<window-name>.jpg`. Like the other routes it returns 503 when Resend isn't configured and 502 if the send fails; the page only says "received" after the server confirms delivery, and shows the counts the server actually got.
 - It emits `HowTo` JSON-LD for the general inside/outside-mount steps that are visible on the page. It intentionally has no FAQPage markup.
 - Linked from the main navigation, the footer, the quote page intro, and each service page's overview section.
 

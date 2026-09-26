@@ -3,77 +3,53 @@
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import { Check, Copy, Plus, Printer, Trash2 } from "lucide-react";
 import { Button } from "./Button";
+import { MeasurementSubmitForm } from "./MeasurementSubmitForm";
+import {
+  FLOOR_OPTIONS,
+  FLOOR_TREATMENTS,
+  MAX_WORKSHEET_ROWS,
+  MOUNT_OPTIONS,
+  WORKSHEET_FIELDS,
+  WORKSHEET_FIELD_LIMITS,
+  WORKSHEET_LABELS,
+  WORKSHEET_TREATMENTS,
+  emptyRow,
+  isRowFilled,
+  worksheetToText,
+  type WorksheetField,
+  type WorksheetRow as Row,
+} from "@/lib/measuring";
 
 /**
  * Customer measurement worksheet for the How to Measure page.
  *
- * On screen it's a stack of cards (one per window) so it works on a phone;
- * entries are kept in this browser's localStorage only — nothing is sent
- * anywhere. "Print worksheet" prints a table of the filled-in rows plus
- * blank rows, so it also works as a paper form.
+ * On screen it's a stack of cards (one per window) so it works on a phone.
+ * Entries are kept in this browser's localStorage until the customer sends
+ * them with the form below the worksheet (MeasurementSubmitForm →
+ * app/api/measurements). "Print worksheet" prints a table of the filled-in
+ * rows plus blank rows, so it also works as a paper form.
  */
-
-type Row = {
-  id: string;
-  room: string;
-  treatment: string;
-  mount: string;
-  width: string;
-  height: string;
-  extra: string;
-  notes: string;
-};
 
 const STORAGE_KEY = "bthd-measure-worksheet-v1";
 const PRINT_CLASS = "print-worksheet";
 const BLANK_PRINT_ROWS = 6;
 
-const worksheetTreatments = [
-  "Custom Drapery",
-  "Roman Shades",
-  "Valance",
-  "Roller Shades",
-  "Zebra Shades",
-  "Woven Woods",
-  "Blinds",
-  "Plantation Shutters",
-  "Motorized Shades",
-  "Exterior Shades",
-  "Not sure yet",
-];
-
-const mountOptions = ["Inside mount", "Outside mount", "Not sure", "Doesn't apply"];
-
 let counter = 0;
 // The first row gets a fixed id so server and client render identical markup.
-const newRow = (id = `row-${Date.now()}-${++counter}`): Row => ({
-  id,
-  room: "",
-  treatment: "",
-  mount: "",
-  width: "",
-  height: "",
-  extra: "",
-  notes: "",
-});
+const newRow = (id = `row-${Date.now()}-${++counter}`): Row => emptyRow(id);
 
-function isRow(v: unknown): v is Row {
-  if (!v || typeof v !== "object") return false;
+// Accepts rows saved by earlier versions (which had no "floor" field).
+function toRow(v: unknown): Row | null {
+  if (!v || typeof v !== "object") return null;
   const r = v as Record<string, unknown>;
-  return ["id", "room", "treatment", "mount", "width", "height", "extra", "notes"].every((k) => typeof r[k] === "string");
-}
-
-function rowToText(r: Row, i: number) {
-  const size = r.width || r.height ? `${r.width || "?"} × ${r.height || "?"} in` : "";
-  const parts = [
-    `${i + 1}. ${r.room || "Unnamed window"}`,
-    r.treatment && `Treatment: ${r.treatment}`,
-    r.mount && `Mount: ${r.mount}`,
-    size && `Width × height: ${size}`,
-    r.extra && `Additional: ${r.extra}`,
-    r.notes && `Notes: ${r.notes}`,
-  ].filter(Boolean);
-  return parts.join("\n   ");
+  if (typeof r.id !== "string") return null;
+  const row = emptyRow(r.id);
+  for (const k of WORKSHEET_FIELDS) {
+    const value = r[k] ?? "";
+    if (typeof value !== "string") return null;
+    row[k] = value.slice(0, WORKSHEET_FIELD_LIMITS[k]);
+  }
+  return row;
 }
 
 function loadRows(): Row[] | null {
@@ -81,7 +57,9 @@ function loadRows(): Row[] | null {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 && parsed.every(isRow) ? parsed : null;
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    const rows = parsed.slice(0, MAX_WORKSHEET_ROWS).map(toRow);
+    return rows.every((r): r is Row => r !== null) ? rows : null;
   } catch {
     // Storage unavailable (private mode, blocked site data) — start empty.
     return null;
@@ -123,7 +101,7 @@ function WorksheetBody({ initialRows, persist }: { initialRows: Row[]; persist: 
     return () => window.removeEventListener("afterprint", cleanup);
   }, []);
 
-  const update = (id: string, key: keyof Row, value: string) =>
+  const update = (id: string, key: WorksheetField, value: string) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
 
   const remove = (id: string) => setRows((rs) => (rs.length === 1 ? [newRow()] : rs.filter((r) => r.id !== id)));
@@ -137,13 +115,13 @@ function WorksheetBody({ initialRows, persist }: { initialRows: Row[]; persist: 
     window.print();
   };
 
-  const filled = rows.filter((r) => Object.entries(r).some(([k, v]) => k !== "id" && v.trim() !== ""));
+  const filled = rows.filter(isRowFilled);
 
   const copy = async () => {
     const text = [
       "BT Home Designs — window measurements (preliminary, inches, width × height)",
       "",
-      ...(filled.length ? filled : rows).map(rowToText),
+      worksheetToText(filled.length ? filled : rows),
     ].join("\n");
     try {
       await navigator.clipboard.writeText(text);
@@ -181,12 +159,12 @@ function WorksheetBody({ initialRows, persist }: { initialRows: Row[]; persist: 
 
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Field id={fid("room")} label="Room / window name">
-                  <input id={fid("room")} value={r.room} onChange={(e) => update(r.id, "room", e.target.value)} className={inputClass} placeholder="e.g. Primary bedroom – left" />
+                  <input id={fid("room")} value={r.room} maxLength={WORKSHEET_FIELD_LIMITS.room} onChange={(e) => update(r.id, "room", e.target.value)} className={inputClass} placeholder="e.g. Primary bedroom – left" />
                 </Field>
                 <Field id={fid("treatment")} label="Treatment">
                   <select id={fid("treatment")} value={r.treatment} onChange={(e) => update(r.id, "treatment", e.target.value)} className={inputClass}>
                     <option value="">Choose…</option>
-                    {worksheetTreatments.map((t) => (
+                    {WORKSHEET_TREATMENTS.map((t) => (
                       <option key={t}>{t}</option>
                     ))}
                   </select>
@@ -194,24 +172,34 @@ function WorksheetBody({ initialRows, persist }: { initialRows: Row[]; persist: 
                 <Field id={fid("mount")} label="Mount type">
                   <select id={fid("mount")} value={r.mount} onChange={(e) => update(r.id, "mount", e.target.value)} className={inputClass}>
                     <option value="">Choose…</option>
-                    {mountOptions.map((m) => (
+                    {MOUNT_OPTIONS.map((m) => (
                       <option key={m}>{m}</option>
                     ))}
                   </select>
                 </Field>
-                <Field id={fid("width")} label="Width (inches)" hint="All three readings if inside mount">
-                  <input id={fid("width")} value={r.width} onChange={(e) => update(r.id, "width", e.target.value)} className={inputClass} placeholder="e.g. 35 ⅜ / 35 ½ / 35 ⅜" />
+                <Field id={fid("width")} label="Width (inches, to the nearest ⅛)" hint="Inside mount: top, middle, and bottom readings">
+                  <input id={fid("width")} value={r.width} maxLength={WORKSHEET_FIELD_LIMITS.width} onChange={(e) => update(r.id, "width", e.target.value)} className={inputClass} placeholder="e.g. 35 ⅜ / 35 ½ / 35 ⅜" />
                 </Field>
-                <Field id={fid("height")} label="Height (inches)" hint="All three readings if inside mount">
-                  <input id={fid("height")} value={r.height} onChange={(e) => update(r.id, "height", e.target.value)} className={inputClass} placeholder="e.g. 60 ¼ / 60 ¼ / 60 ⅛" />
+                <Field id={fid("height")} label="Height (inches, to the nearest ⅛)" hint="Inside mount: left, center, and right readings">
+                  <input id={fid("height")} value={r.height} maxLength={WORKSHEET_FIELD_LIMITS.height} onChange={(e) => update(r.id, "height", e.target.value)} className={inputClass} placeholder="e.g. 60 ¼ / 60 ¼ / 60 ⅛" />
                 </Field>
+                {(FLOOR_TREATMENTS.includes(r.treatment) || r.floor) && (
+                  <Field id={fid("floor")} label="Floor under the window" hint="Drapery only">
+                    <select id={fid("floor")} value={r.floor} onChange={(e) => update(r.id, "floor", e.target.value)} className={inputClass}>
+                      <option value="">Choose…</option>
+                      {FLOOR_OPTIONS.map((f) => (
+                        <option key={f}>{f}</option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
                 <Field id={fid("extra")} label="Additional measurements" hint="Depth, ceiling to floor, rod width, etc.">
-                  <input id={fid("extra")} value={r.extra} onChange={(e) => update(r.id, "extra", e.target.value)} className={inputClass} placeholder="e.g. Depth 3 ¼; C = 96" />
+                  <input id={fid("extra")} value={r.extra} maxLength={WORKSHEET_FIELD_LIMITS.extra} onChange={(e) => update(r.id, "extra", e.target.value)} className={inputClass} placeholder="e.g. Depth 3 ¼; C = 96" />
                 </Field>
               </div>
               <div className="mt-4">
                 <Field id={fid("notes")} label="Notes">
-                  <textarea id={fid("notes")} value={r.notes} onChange={(e) => update(r.id, "notes", e.target.value)} rows={2} className={inputClass} placeholder="Crank handle, door nearby, photo taken, looks out of square…" />
+                  <textarea id={fid("notes")} value={r.notes} maxLength={WORKSHEET_FIELD_LIMITS.notes} onChange={(e) => update(r.id, "notes", e.target.value)} rows={2} className={inputClass} placeholder="Crank handle, door nearby, photo taken, looks out of square…" />
                 </Field>
               </div>
             </fieldset>
@@ -219,7 +207,13 @@ function WorksheetBody({ initialRows, persist }: { initialRows: Row[]; persist: 
         })}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Button onClick={() => setRows((rs) => [...rs, newRow()])} variant="secondary" icon={false} className="w-full sm:w-auto">
+          <Button
+            onClick={() => setRows((rs) => [...rs, newRow()])}
+            disabled={rows.length >= MAX_WORKSHEET_ROWS}
+            variant="secondary"
+            icon={false}
+            className="w-full sm:w-auto"
+          >
             <Plus className="h-4 w-4" aria-hidden="true" /> Add another window
           </Button>
           <Button onClick={print} variant="secondary" icon={false} className="w-full sm:w-auto">
@@ -237,21 +231,25 @@ function WorksheetBody({ initialRows, persist }: { initialRows: Row[]; persist: 
           {copied ? "Measurements copied to clipboard." : ""}
         </p>
         <p className="text-[12px] leading-relaxed text-charcoal-soft/80">
-          Your entries are saved only in this browser on this device — nothing is sent to us until you choose to share it.
+          Your entries are saved in this browser on this device. Nothing is sent to BT Home Designs until you use the
+          form below.
         </p>
+
+        <MeasurementSubmitForm rows={filled} />
       </div>
 
       {/* Print-only version: filled rows followed by blank rows to write in. */}
       <div id="worksheet-print" className="hidden print:block">
         <p style={{ fontSize: "16pt", fontWeight: 700 }}>BT Home Designs — Window Measurement Worksheet</p>
         <p style={{ fontSize: "9pt", marginTop: "4pt" }}>
-          Preliminary measurements for an estimate. Inches, written width × height. Record all three readings for inside
-          mounts. BT Home Designs confirms final measurements before anything is ordered.
+          Preliminary measurements for an estimate. Inches to the nearest ⅛, written width × height. Record all three
+          width and height readings for inside mounts. BT Home Designs confirms final measurements before anything is
+          ordered.
         </p>
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10pt", fontSize: "9pt" }}>
           <thead>
             <tr>
-              {["Room / window", "Treatment", "Mount", "Width", "Height", "Additional", "Notes"].map((h) => (
+              {WORKSHEET_FIELDS.map((f) => WORKSHEET_LABELS[f]).map((h) => (
                 <th key={h} style={{ border: "1px solid #999", padding: "5pt", textAlign: "left" }}>
                   {h}
                 </th>
@@ -261,7 +259,7 @@ function WorksheetBody({ initialRows, persist }: { initialRows: Row[]; persist: 
           <tbody>
             {printRows.map((r, i) => (
               <tr key={r?.id ?? `blank-${i}`} style={{ height: "34pt" }}>
-                {(r ? [r.room, r.treatment, r.mount, r.width, r.height, r.extra, r.notes] : ["", "", "", "", "", "", ""]).map((v, j) => (
+                {WORKSHEET_FIELDS.map((f) => (r ? r[f] : "")).map((v, j) => (
                   <td key={j} style={{ border: "1px solid #999", padding: "5pt", verticalAlign: "top" }}>
                     {v}
                   </td>
