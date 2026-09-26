@@ -4,7 +4,7 @@ A production-ready marketing and lead-generation website for BT Home Designs, a 
 
 ## Overview
 
-- 37 statically generated pages: homepage, about, contact, gallery, quote, warranty, a services index + 7 individual service pages, and a service-area index + 15 individual city pages
+- 38 statically generated pages: homepage, about, contact, gallery, quote, warranty, how to measure, a services index + 7 individual service pages, and a service-area index + 15 individual city pages
 - A multi-step quote request form and a contact form, both posting to a single API route; a separate warranty/service request form (with real photo/video attachments) posting to its own route
 - SEO baked in: per-page metadata, Open Graph/Twitter cards, JSON-LD (LocalBusiness, Service, Breadcrumb), a dynamic `sitemap.xml`, and `robots.txt`
 - All editable business details (phone, address, hours, social links, policies) centralized in one file: `lib/data/business.ts`
@@ -76,6 +76,7 @@ app/
   gallery/page.tsx
   quote/page.tsx
   warranty/page.tsx           Warranty & service request page
+  how-to-measure/page.tsx     Customer measuring guide + worksheet (see "How to Measure Guide")
   services/page.tsx           Services index
   services/[slug]/page.tsx    Single template rendering all 7 services
   service-area/page.tsx       Service-area index
@@ -171,6 +172,16 @@ Same pattern as services: `lib/data/cities.ts` is the single data source, render
 - Server-side validation re-checks everything the client already checks (required fields, email/phone format, product/issue type against the fixed option lists, file type/size/count/total) since a request can always bypass the browser UI.
 - The form section has a stable anchor, `#service-request` (e.g. for a printed warranty guide's QR code: `https://www.bthomedesigns.com/warranty#service-request`), and a "Request Warranty or Service Help" button near the top of the page scrolls straight to it.
 - `/warranty` is linked from the site footer (next to Contact) but intentionally left out of the main navigation — it's a customer-service resource, not a primary sales page.
+
+## How to Measure Guide
+
+`/how-to-measure` (`app/how-to-measure/page.tsx`) walks homeowners through preliminary measurements for an estimate: before-you-start habits, inside vs. outside mount, drapery (with and without an installed rod/track), Roman shades, valances, a professional-measure note for shutters/motorized/exterior shades, a worksheet, and an FAQ.
+
+- **Data collection only.** The page deliberately gives no deductions, overlap/stackback amounts, minimum depths, mounting heights, or rounding rules — those vary by product and manufacturer and are set at the professional measure. Keep it that way when editing.
+- **Diagrams** are hand-built SVGs in `public/images/measuring/` using the site palette. The letters (A, B, C…) and numbers in each diagram must match the legend lists next to it on the page; if you change an instruction, update both.
+- **Worksheet** (`components/MeasurementWorksheet.tsx`) stores entries only in the visitor's browser (localStorage) — nothing is submitted. "Print worksheet" prints just a table of filled rows plus blank rows (print CSS at the bottom of `app/globals.css`); "Copy as text" copies a plain-text summary for texting or emailing.
+- It emits `HowTo` JSON-LD for the general inside/outside-mount steps that are visible on the page. It intentionally has no FAQPage markup.
+- Linked from the main navigation, the footer, the quote page intro, and each service page's overview section.
 
 ## Connecting Production Storage
 

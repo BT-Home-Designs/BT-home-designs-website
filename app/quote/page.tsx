@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { QuoteForm } from "@/components/QuoteForm";
 
@@ -19,6 +20,13 @@ export default function QuotePage() {
         <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-charcoal-soft">
           Answer a few quick questions and we&apos;ll follow up within one business day to schedule your free,
           no-pressure in-home consultation.
+        </p>
+        <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-charcoal-soft">
+          Want to include rough sizes? Our{" "}
+          <Link href="/how-to-measure" className="font-medium text-oak-dark underline-offset-2 hover:underline">
+            how to measure guide
+          </Link>{" "}
+          shows what to record — measuring is optional, and we confirm every measurement before ordering.
         </p>
       </div>
 

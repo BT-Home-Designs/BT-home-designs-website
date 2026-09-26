@@ -95,3 +95,25 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * How to Measure worksheet — "Print worksheet" adds .print-worksheet to
+ * <html> so only the worksheet table prints (see
+ * components/MeasurementWorksheet.tsx). A normal browser print of the page
+ * is unaffected.
+ */
+@media print {
+  html.print-worksheet body * {
+    visibility: hidden;
+    transition: none !important;
+  }
+  html.print-worksheet #worksheet-print,
+  html.print-worksheet #worksheet-print * {
+    visibility: visible;
+  }
+  html.print-worksheet #worksheet-print {
+    position: absolute;
+    inset: 0 0 auto 0;
+    color: #000;
+  }
+}

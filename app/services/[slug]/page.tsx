@@ -19,6 +19,17 @@ import { services, getServiceBySlug } from "@/lib/data/services";
 import { serviceHeroImages } from "@/lib/data/media";
 import { serviceGuides, consultationSteps } from "@/lib/data/serviceGuides";
 
+// Deep links into the How to Measure guide (app/how-to-measure/page.tsx).
+const measureGuideAnchor: Record<string, string> = {
+  "custom-drapery": "/how-to-measure#drapery",
+  "roman-shades": "/how-to-measure#roman-shades",
+  "plantation-shutters": "/how-to-measure#other-products",
+  "motorized-shades": "/how-to-measure#other-products",
+  "exterior-shades": "/how-to-measure#other-products",
+};
+// Products the guide sends to a professional measure instead of DIY steps.
+const professionalMeasureOnly = new Set(["plantation-shutters", "motorized-shades", "exterior-shades"]);
+
 export function generateStaticParams() {
   return services.map((s) => ({ slug: s.slug }));
 }
@@ -117,8 +128,11 @@ export default async function ServicePage({ params }: ServicePageProps) {
             {guide.intro.map((p, i) => (
               <p key={i} className="mt-5 text-[15px] leading-relaxed text-charcoal-soft">{p}</p>
             ))}
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
               <Button href="/quote" variant="secondary">Request a Free Measure</Button>
+              <Link href={measureGuideAnchor[service.slug] ?? "/how-to-measure"} className="text-[13px] font-medium text-oak-dark underline-offset-4 hover:underline">
+                {professionalMeasureOnly.has(service.slug) ? "Why we measure these for you" : "How to measure for an estimate"}
+              </Link>
             </div>
           </FadeIn>
         </div>

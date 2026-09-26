@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 420" width="560" height="420" role="img" aria-labelledby="t d">
+  <title id="t">Measure the width in three places</title>
+  <desc id="d">Front view of a window opening with three width measurements between the inside side walls: 1 near the top, 2 in the middle, and 3 near the bottom.</desc>
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#7d5a3a"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #2a2622; }
+      .lbl { font-size: 22px; }
+      .lbl-b { font-size: 22px; font-weight: 700; }
+      .dim { stroke: #7d5a3a; stroke-width: 3.5; marker-start: url(#arw); marker-end: url(#arw); fill: none; }
+      .ext { stroke: #7d5a3a; stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+      .badge-t { font-size: 22px; font-weight: 700; fill: #ffffff; }
+    </style>
+  </defs>
+  <rect width="560" height="420" rx="16" fill="#faf7f2"/>
+  <rect x="20" y="20" width="520" height="340" rx="8" fill="#f1e9dd"/>
+  <rect x="110" y="50" width="260" height="280" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
+  <rect x="134" y="74" width="212" height="232" fill="#d8c8b0" stroke="#2a2622" stroke-width="2"/>
+  <rect x="150" y="90" width="180" height="200" fill="#dfe8e6" stroke="#2a2622" stroke-width="2"/>
+  <path d="M134 74 L150 90 M346 74 L330 90 M134 306 L150 290 M346 306 L330 290" stroke="#2a2622" stroke-width="1.5"/>
+  <line x1="150" y1="190" x2="330" y2="190" stroke="#2a2622" stroke-width="4"/>
+  <line class="dim" x1="134" y1="88" x2="346" y2="88"/>
+  <circle cx="240" cy="88" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="240" y="96" text-anchor="middle">1</text>
+  <text class="lbl" x="386" y="96" text-anchor="start">Top</text>
+  <line class="dim" x1="134" y1="168" x2="346" y2="168"/>
+  <circle cx="240" cy="168" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="240" y="176" text-anchor="middle">2</text>
+  <text class="lbl" x="386" y="176" text-anchor="start">Middle</text>
+  <line class="dim" x1="134" y1="292" x2="346" y2="292"/>
+  <circle cx="240" cy="292" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="240" y="300" text-anchor="middle">3</text>
+  <text class="lbl" x="386" y="300" text-anchor="start">Bottom</text>
+  <text class="lbl" x="280" y="396" text-anchor="middle">Write down all three widths</text>
+</svg>

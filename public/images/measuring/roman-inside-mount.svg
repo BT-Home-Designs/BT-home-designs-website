@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 400" width="560" height="400" role="img" aria-labelledby="t d">
+  <title id="t">Roman shade inside mount: measure the opening</title>
+  <desc id="d">A Roman shade raised inside a window opening. Width A runs between the inside side walls of the opening and height B runs from the top of the opening to the sill. Measure the opening itself, not the trim.</desc>
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#7d5a3a"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #2a2622; }
+      .lbl { font-size: 22px; }
+      .lbl-b { font-size: 22px; font-weight: 700; }
+      .dim { stroke: #7d5a3a; stroke-width: 3.5; marker-start: url(#arw); marker-end: url(#arw); fill: none; }
+      .ext { stroke: #7d5a3a; stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+      .badge-t { font-size: 22px; font-weight: 700; fill: #ffffff; }
+    </style>
+  </defs>
+  <rect width="560" height="400" rx="16" fill="#faf7f2"/>
+  <rect x="20" y="20" width="520" height="320" rx="8" fill="#f1e9dd"/>
+  <rect x="150" y="40" width="260" height="276" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
+  <rect x="174" y="64" width="212" height="228" fill="#d8c8b0" stroke="#2a2622" stroke-width="2"/>
+  <rect x="190" y="80" width="180" height="196" fill="#dfe8e6" stroke="#2a2622" stroke-width="2"/>
+  <path d="M174 64 L190 80 M386 64 L370 80 M174 292 L190 276 M386 292 L370 276" stroke="#2a2622" stroke-width="1.5"/>
+  <line x1="190" y1="178" x2="370" y2="178" stroke="#2a2622" stroke-width="4"/>
+  <rect x="176" y="66" width="208" height="90" fill="#c4a179" stroke="#2a2622" stroke-width="2"/>
+  <line x1="176" y1="96" x2="384" y2="96" stroke="#7d5a3a" stroke-width="2"/>
+  <line x1="176" y1="126" x2="384" y2="126" stroke="#7d5a3a" stroke-width="2"/>
+  <line class="dim" x1="174" y1="214" x2="386" y2="214"/>
+  <circle cx="250" cy="214" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="250" y="222" text-anchor="middle">A</text>
+  <line class="dim" x1="346" y1="64" x2="346" y2="292"/>
+  <circle cx="346" cy="262" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="346" y="270" text-anchor="middle">B</text>
+  <text class="lbl" x="280" y="374" text-anchor="middle">Measure the opening itself</text>
+</svg>

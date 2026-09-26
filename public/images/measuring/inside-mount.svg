@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" width="560" height="560" role="img" aria-labelledby="t d">
+  <title id="t">Inside mount: measure inside the window opening</title>
+  <desc id="d">Front view of a recessed window. Width A runs between the inside side walls of the opening and height B runs from the top of the opening to the sill, not including the trim. A view from above shows depth C, from the front edge of the opening back to the glass.</desc>
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#7d5a3a"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #2a2622; }
+      .lbl { font-size: 22px; }
+      .lbl-b { font-size: 22px; font-weight: 700; }
+      .dim { stroke: #7d5a3a; stroke-width: 3.5; marker-start: url(#arw); marker-end: url(#arw); fill: none; }
+      .ext { stroke: #7d5a3a; stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+      .badge-t { font-size: 22px; font-weight: 700; fill: #ffffff; }
+    </style>
+  </defs>
+  <rect width="560" height="560" rx="16" fill="#faf7f2"/>
+  <rect x="20" y="20" width="520" height="330" rx="8" fill="#f1e9dd"/>
+  <rect x="150" y="46" width="260" height="270" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
+  <rect x="174" y="70" width="212" height="222" fill="#d8c8b0" stroke="#2a2622" stroke-width="2"/>
+  <rect x="190" y="86" width="180" height="190" fill="#dfe8e6" stroke="#2a2622" stroke-width="2"/>
+  <path d="M174 70 L190 86 M386 70 L370 86 M174 292 L190 276 M386 292 L370 276" stroke="#2a2622" stroke-width="1.5"/>
+  <line x1="190" y1="181" x2="370" y2="181" stroke="#2a2622" stroke-width="4"/>
+  <line class="dim" x1="174" y1="118" x2="386" y2="118"/>
+  <circle cx="280" cy="118" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="280" y="126" text-anchor="middle">A</text>
+  <line class="dim" x1="342" y1="70" x2="342" y2="292"/>
+  <circle cx="342" cy="250" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="342" y="258" text-anchor="middle">B</text>
+  <text class="lbl" x="280" y="340" text-anchor="middle">Measure inside the trim, not across it</text>
+  <text class="lbl-b" x="40" y="392" text-anchor="start">Seen from above</text>
+  <rect x="40" y="410" width="134" height="90" fill="#e7dac6" stroke="#2a2622" stroke-width="2"/>
+  <rect x="386" y="410" width="134" height="90" fill="#e7dac6" stroke="#2a2622" stroke-width="2"/>
+  <rect x="150" y="500" width="24" height="12" fill="#ffffff" stroke="#2a2622" stroke-width="2"/>
+  <rect x="386" y="500" width="24" height="12" fill="#ffffff" stroke="#2a2622" stroke-width="2"/>
+  <line x1="174" y1="424" x2="386" y2="424" stroke="#8fb0a8" stroke-width="8"/>
+  <text class="lbl" x="300" y="450" text-anchor="middle">Glass</text>
+  <line class="dim" x1="210" y1="500" x2="210" y2="428"/>
+  <circle cx="240" cy="470" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="240" y="478" text-anchor="middle">C</text>
+  <text class="lbl" x="280" y="545" text-anchor="middle">Room side</text>
+</svg>

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Gallery", href: "/gallery" },
+  { label: "How to Measure", href: "/how-to-measure" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -59,23 +60,24 @@ export function Navbar() {
         scrolled ? "bg-warm-white/95 shadow-[0_1px_0_rgba(0,0,0,0.06)] backdrop-blur" : "bg-warm-white"
       )}
     >
-      <nav className="container-lux flex h-20 items-center justify-between md:h-24" aria-label="Primary">
-        <Link href="/" aria-label="BT Home Designs home" className="flex flex-col leading-none" onClick={() => setMobileOpen(false)}>
+      <nav className="container-lux flex h-20 items-center justify-between gap-4 md:h-24" aria-label="Primary">
+        <Link href="/" aria-label="BT Home Designs home" className="flex shrink-0 flex-col leading-none" onClick={() => setMobileOpen(false)}>
           <span className="font-display text-lg tracking-tight text-charcoal md:text-xl">{business.name.toUpperCase()}</span>
           <span className="eyebrow mt-1 !text-[9px] !tracking-[0.22em] text-charcoal-soft">{business.tagline.toUpperCase()}</span>
         </Link>
 
-        <div className="hidden items-center gap-8 lg:flex">
+        <div className="hidden items-center gap-6 xl:flex 2xl:gap-8">
           <NavLink href="/" label="Home" active={pathname === "/"} />
           <NavDropdown label="Services" items={serviceItems} viewAllHref="/services" viewAllLabel="View all services" />
           <NavLink href="/gallery" label="Gallery" active={pathname === "/gallery"} />
           <NavDropdown label="Service Area" items={cityItems} viewAllHref="/service-area" viewAllLabel="View all cities" />
+          <NavLink href="/how-to-measure" label="How to Measure" active={pathname === "/how-to-measure"} />
           <NavLink href="/about" label="About" active={pathname === "/about"} />
           <NavLink href="/contact" label="Contact" active={pathname === "/contact"} />
         </div>
 
-        <div className="hidden lg:flex">
-          <Button href="/quote" size="md" icon={false}>
+        <div className="hidden shrink-0 xl:flex">
+          <Button href="/quote" size="md" icon={false} className="whitespace-nowrap">
             Request a Consultation
           </Button>
         </div>
@@ -83,7 +85,7 @@ export function Navbar() {
         <button
           ref={mobileToggleRef}
           type="button"
-          className="lg:hidden"
+          className="xl:hidden"
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
           aria-controls="mobile-menu"
@@ -105,7 +107,7 @@ export function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="overflow-hidden bg-warm-white lg:hidden"
+            className="overflow-hidden bg-warm-white xl:hidden"
           >
             <div className="container-lux flex max-h-[calc(100vh-5rem)] flex-col gap-1 overflow-y-auto pb-8 pt-2">
               <Link href="/" onClick={() => setMobileOpen(false)} className="py-2.5 text-[15px] font-medium text-charcoal">
@@ -177,7 +179,7 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
     <Link
       href={href}
       className={cn(
-        "relative pb-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-charcoal-soft transition-colors hover:text-charcoal",
+        "relative whitespace-nowrap pb-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-charcoal-soft transition-colors hover:text-charcoal",
         active && "text-charcoal after:absolute after:inset-x-0 after:-bottom-0.5 after:h-[2px] after:bg-oak"
       )}
     >
@@ -230,7 +232,7 @@ function NavDropdown({
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
         onFocus={() => setOpen(true)}
-        className="flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-charcoal-soft transition-colors hover:text-charcoal"
+        className="flex items-center gap-1 whitespace-nowrap text-[12px] font-semibold uppercase tracking-[0.12em] text-charcoal-soft transition-colors hover:text-charcoal"
       >
         {label} <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
       </button>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 420" width="560" height="420" role="img" aria-labelledby="t d">
+  <title id="t">Write measurements as width by height</title>
+  <desc id="d">Width is measured side to side and height is measured top to bottom. Always write width first, for example 36 3/8 by 60 1/2 inches.</desc>
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#7d5a3a"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #2a2622; }
+      .lbl { font-size: 22px; }
+      .lbl-b { font-size: 22px; font-weight: 700; }
+      .dim { stroke: #7d5a3a; stroke-width: 3.5; marker-start: url(#arw); marker-end: url(#arw); fill: none; }
+      .ext { stroke: #7d5a3a; stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+      .badge-t { font-size: 22px; font-weight: 700; fill: #ffffff; }
+    </style>
+  </defs>
+  <rect width="560" height="420" rx="16" fill="#faf7f2"/>
+  <rect x="20" y="20" width="520" height="380" rx="8" fill="#f1e9dd"/>
+  <rect x="60" y="96" width="190" height="250" fill="#ffffff" stroke="#2a2622" stroke-width="3"/>
+  <rect x="84" y="120" width="142" height="202" fill="#d8c8b0" stroke="#2a2622" stroke-width="2"/>
+  <rect x="84" y="120" width="142" height="202" fill="#dfe8e6" stroke="#2a2622" stroke-width="2"/>
+  <line x1="84" y1="221" x2="226" y2="221" stroke="#2a2622" stroke-width="4"/>
+  <text class="lbl-b" x="155" y="50" text-anchor="middle">Width</text>
+  <line class="dim" x1="60" y1="70" x2="250" y2="70"/>
+  <circle cx="155" cy="70" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="155" y="78" text-anchor="middle">1</text>
+  <line class="dim" x1="284" y1="96" x2="284" y2="346"/>
+  <circle cx="284" cy="221" r="18" fill="#7d5a3a" stroke="#faf7f2" stroke-width="3"/>
+  <text class="badge-t" x="284" y="229" text-anchor="middle">2</text>
+  <text class="lbl-b" x="284" y="378" text-anchor="middle">Height</text>
+  <rect x="330" y="120" width="190" height="200" rx="10" fill="#ffffff" stroke="#7d5a3a" stroke-width="2.5"/>
+  <text class="lbl" x="425" y="160" text-anchor="middle">Write it as</text>
+  <text class="lbl-b" x="425" y="198" text-anchor="middle">W × H</text>
+  <text x="425" y="250" text-anchor="middle" style="font-size:28px;font-weight:700;fill:#7d5a3a">36 ⅜ × 60 ½</text>
+  <text class="lbl" x="425" y="294" text-anchor="middle">width first</text>
+</svg>
