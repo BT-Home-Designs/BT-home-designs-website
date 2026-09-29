@@ -12,8 +12,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Separate BT Custom Shades site, linted from its own folder.
-    "bt-custom-shades/**",
   ]),
 ]);
 
