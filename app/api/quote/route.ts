@@ -309,7 +309,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, delivered: true, id: submission.id }, { status: 201 });
   } catch (err) {
-    console.error("Unexpected error handling submission:", err);
-    return NextResponse.json({ error: "Something went wrong processing your request. Please try again or call us directly." }, { status: 500 });
+    // Generic catch-all — reaching here means an exception escaped every
+    // specific handler above, so this is the one place we don't already
+    // know why. Log enough to diagnose it from Vercel's function logs
+    // without ever writing PII (name/email/phone/address/message) there:
+    // field NAMES only, never their values, plus the error's own
+    // name/message/stack. errorId ties a specific Vercel log line back to
+    // a specific support call/report.
+    const errorId = randomUUID();
+    console.error("Unexpected error handling submission", {
+      errorId,
+      errorName: err instanceof Error ? err.name : typeof err,
+      errorMessage: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      submittedFieldNames: Object.keys(data ?? {}),
+    });
+    return NextResponse.json(
+      { error: `Something went wrong processing your request. Please try again or call us directly. (Reference: ${errorId})` },
+      { status: 500 }
+    );
   }
 }
