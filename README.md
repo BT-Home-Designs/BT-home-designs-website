@@ -195,6 +195,9 @@ LEAD_NOTIFICATION_EMAIL=        # required — the inbox that receives leads
 RESEND_FROM_EMAIL=              # optional, defaults to the verified leads@mail.bthomedesigns.com sender
 NEXT_PUBLIC_GA_MEASUREMENT_ID=  # optional — Google Analytics 4, "G-XXXXXXXXXX"
 NEXT_PUBLIC_GSC_VERIFICATION=   # optional — Google Search Console ownership token
+QUOTE_ADMIN_PASSWORD=           # required for the quote dashboard (/admin), 12+ chars
+QUOTE_SESSION_SECRET=           # required for the quote dashboard, 32+ random chars
+DATABASE_URL=                   # Postgres — required for quotes in production (Vercel)
 ```
 
 None of these are set anywhere in this repository or its deployment config — no account has been created and no value has been invented. Every one of them is safe to leave unset: the site builds and runs normally, lead delivery just honestly reports itself unavailable until `RESEND_API_KEY`/`LEAD_NOTIFICATION_EMAIL` are set, and analytics simply doesn't load until its variable is set. Never commit real secrets — `.env.example` is intentionally tracked (values blank) so the required names are documented, while `.env.local` and any other real `.env*` file stay out of version control.
@@ -228,6 +231,77 @@ None of these are set anywhere in this repository or its deployment config — n
 - Review carousel: star ratings have a text alternative (`aria-label`, not color/shape alone), indicator dots use `role="tab"`/`aria-selected`
 - `prefers-reduced-motion` is respected globally (`app/globals.css` forces near-zero animation duration) and specifically in the hero's signature shutter-reveal animation, which fully skips itself under reduced motion via `useSyncExternalStore`
 - No hydration-unsafe patterns: no `Date.now()`/`Math.random()` in render output, and every `window`/`document`/`matchMedia` access lives inside a client component's event handler, effect, or `useSyncExternalStore` snapshot function
+
+## Customer Quotes & Owner Dashboard (v1)
+
+A private, interactive quote presentation for each customer, managed from a password-protected dashboard — no code changes per customer.
+
+### Where to go
+
+| What | URL |
+|---|---|
+| Owner dashboard (create/edit quotes) | `/admin` → sign in with `QUOTE_ADMIN_PASSWORD` |
+| A customer's quote | `/q/<private-token>` — copy it from the quote's **Customer link** panel after publishing |
+
+### Owner workflow
+
+1. `/admin` → **+ New quote** (or **Add sample quote** to explore with labeled demo data).
+2. Fill in **Customer & project**, add **Design pages** (one per room / design direction / hardware — each treatment type has starter selection labels), upload photos, and mark the chosen options **Selected**.
+3. Add **Line items** (customer price; optional *internal cost* that never leaves the dashboard), the tax rate, and the deposit as a **percent or dollar amount**.
+4. Create the invoice or payment link in **Square**, paste it under **Square payment links** (deposit, full payment, and/or remaining balance — the same invoice link can be reused), and label each button.
+5. Write your **Terms** and **Approval statement** (nothing is pre-filled — the customer accepts exactly what you write).
+6. **Save draft** → **Preview** → **Publish** → **Copy** the private link and send it yourself.
+7. Watch **Approvals** and **Change requests** on the right. When Square confirms a payment, **Record a confirmed payment** (date, amount, note). Edit or remove entries to correct mistakes — every change is logged under **Activity**.
+8. **Revoke link** / **Create new link**, **Duplicate**, or **Archive** from the same screen.
+
+### Customer experience (`/q/<token>`)
+
+- Landscape, slide-style presentation: cover → each design page → pricing → terms → **Approve & Pay**. Previous/Next arrows, page indicators, keyboard arrows, and swipe on phones; every page change returns to the top, and opening a link always starts at page 1.
+- **Approve Quote** requires the customer's typed name and an explicit checkbox; the approval, timestamp, quote version, line items, totals, terms, and approval statement are saved exactly as shown. Status becomes **Approved—Awaiting Deposit** until you record payment.
+- **Pay Deposit / Pay in Full / Pay Remaining Balance** open the exact Square URL you pasted, in a new tab — only when a valid https Square link (square.link, squareup.com, square.site) exists and a balance applies; by default only after approval.
+- **Request Changes** saves the message to the dashboard.
+- **Download PDF**: upright landscape Letter, generated from the same data as the page.
+
+### Payment rules (by design)
+
+- No Square API integration or automatic syncing in v1.
+- A quote is **never** marked paid by clicking a Pay button, approving, or returning from Square. Balances come only from payments you record.
+- Publishing changes to pricing, scope (rooms/selections/descriptions), tax, deposit, or terms after approval **supersedes** the earlier approval (kept in history) and requires a new one. Photo, caption, intro, and payment-link edits don't.
+
+### Privacy & security
+
+- Links use a 192-bit random token. Drafts, archived quotes, revoked links, and unknown tokens all return the same 404.
+- Photos are stored privately (never in `/public`) and served only to the owner or to the link whose *published* quote includes them.
+- Customer pages and PDFs are built from a whitelisted view: internal cost, margins, internal notes, and the customer's email/phone never reach them.
+- `/q/*`: `X-Robots-Tag: noindex`, meta noindex, `Referrer-Policy: no-referrer` (the link isn't leaked to Square), `Cache-Control: no-store`; never in the sitemap. Site nav/footer/analytics are not loaded on quote or dashboard pages.
+- `/admin` and `/api/admin` require a signed, HttpOnly session cookie (checked in `middleware.ts` **and** in every action). Sign-in is rate-limited.
+- Approvals and change requests are saved **before** any email is attempted, using the existing Resend setup (`RESEND_API_KEY` + `LEAD_NOTIFICATION_EMAIL`) to notify only the business inbox. Each record shows whether its email was sent, failed, or not configured.
+
+### Setup
+
+| Variable | Needed for |
+|---|---|
+| `QUOTE_ADMIN_PASSWORD` (12+ chars) | Dashboard sign-in |
+| `QUOTE_SESSION_SECRET` (32+ random chars) | Signing the dashboard session cookie |
+| `DATABASE_URL` (Postgres) | **Required on Vercel** — quotes, approvals, payments, photos. Tables are created automatically. Without it (local dev only) data is kept in `./.data/quotes` (gitignored). |
+| `RESEND_API_KEY` + `LEAD_NOTIFICATION_EMAIL` | Optional approval/change-request emails (already used by the site's forms) |
+
+### Code map
+
+```
+app/q/[token]/                Customer presentation (server-rendered, noindex)
+app/api/q/[token]/…           approve, changes, pdf
+app/api/quote-files/[fileId]  Private photo access
+app/admin/                    Login, dashboard, editor, draft preview, server actions
+app/api/admin/…               Photo upload, owner PDF
+components/quote/             QuotePresentation (slides), status pill, unavailable page
+components/admin/             QuoteEditor, PagesEditor, SidePanels
+lib/quotes/                   types, money/totals math, status, storage (file + Postgres),
+                              service (all mutations), customer view, PDF, sample data
+middleware.ts                 Admin protection + private-page headers
+```
+
+Run `npm test` for the money/rounding/link-validation unit tests.
 
 ## Phase 2 Architecture
 

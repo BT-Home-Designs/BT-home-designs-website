@@ -95,3 +95,23 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Quote presentation palette — taken from the BT logo and the customer
+ * quote PDFs (deep green, gold, cream). Used by /q and /admin.
+ */
+:root {
+  --bt-green: #23392b;
+  --bt-green-deep: #1b2e22;
+  --bt-gold: #c19a3f;
+  --bt-gold-light: #e2c47e;
+  --bt-cream: #f8f5ec;
+}
+
+@theme inline {
+  --color-bt-green: var(--bt-green);
+  --color-bt-green-deep: var(--bt-green-deep);
+  --color-bt-gold: var(--bt-gold);
+  --color-bt-gold-light: var(--bt-gold-light);
+  --color-bt-cream: var(--bt-cream);
+}

@@ -7,6 +7,7 @@ import { LocalBusinessSchema } from "@/components/LocalBusinessSchema";
 import { Analytics } from "@/components/Analytics";
 import { UtmCapture } from "@/components/UtmCapture";
 import { business } from "@/lib/data/business";
+import { PublicSiteOnly } from "@/components/PublicSiteOnly";
 
 // Typography: system font stack, no next/font/google or any external font
 // fetch — see globals.css (--font-display / --font-sans) for the current
@@ -63,12 +64,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="antialiased">
         <LocalBusinessSchema />
-        <Analytics />
-        <UtmCapture />
-        <Navbar />
+        <PublicSiteOnly>
+          <Analytics />
+          <UtmCapture />
+          <Navbar />
+        </PublicSiteOnly>
         <main>{children}</main>
-        <Footer />
-        <FloatingCTA />
+        <PublicSiteOnly>
+          <Footer />
+          <FloatingCTA />
+        </PublicSiteOnly>
       </body>
     </html>
   );
